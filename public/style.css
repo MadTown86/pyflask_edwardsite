@@ -1,0 +1,263 @@
+/* GD - 1/23/2024 */
+
+/* All Page Shared */
+
+header {
+    width: 100%;
+    height: 200px;
+}
+
+.gradient_background {
+    background: linear-gradient(90deg,#dff88c, #76f8f8);
+    background-size: 180% 180%;
+    animation: gradient-animation 18s ease infinite;
+}
+
+.headernav {
+    width: 100%;
+    margin: None;
+    padding: None;
+}
+
+body {
+    display: grid;
+    width: 100%; 
+    height: 100vh;
+    margin: None;
+    padding: None;
+}
+
+#footer_all {
+    display: flex;
+    padding-left: 5%;
+    padding-bottom: 10px;
+}
+
+.active {
+    background-color: #4b7ae7;
+    border: 1px solid #dff88c;
+    border-radius: 5px;
+    color: #ffffff;
+}
+
+.buttoncolor {
+    background-color: #76f976;
+}
+
+.train_block {
+    background: rgba(0,0,0,0.5);
+    border-radius: 10px;
+}
+
+input:focus,
+textarea:focus {
+  border-color: #007bff;
+}
+
+#newPostBtn {
+    margin: 20px 0px 20px 0px;
+    background-color: #2ecc71;
+    padding: 10px 15px;
+    font-size: 1em;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    border: none;
+    color: #fff;
+    text-align: center;
+    text-decoration: none;
+  }
+  
+  #newPostBtn:hover {
+    background-color: #27ae60;
+  }
+
+button {
+  text-decoration: none;
+  background-color: #007bff;
+  color: #fff;
+  padding: 10px;
+  font-size: 1em;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.contact {
+    max-width: 800px;
+    margin: 50px 50px 50px 50px;
+    background-color: #fff;
+    padding: 20px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  }
+
+  button.full-width {
+    display: block;
+    text-align: center;
+    width: 100%;
+  }
+
+input,
+textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1em;
+  outline: none;
+  transition: border 0.3s;
+}
+
+
+
+#main_body {
+    background-image: url("/assets/images/raw/training_images_opt.jpg");
+}
+
+#train_body {
+    background-image: url("/assets/images/raw/training_images_opt.jpg");
+}
+
+
+/* End All Page Shared */
+
+/* Index.html Specific Elements */
+
+.card_vegetables {
+    background-image: url("/assets/images/raw/strawberries_blue_opt.jpg");
+    background-repeat: no-repeat;
+    background-size: 100%;
+}
+
+.card_fitness {
+    background-image: url("/assets/images/raw/barbells_3_opt.jpg");
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+}
+
+.card_contact {
+    background-image: url("/assets/images/raw/contact_opt.jpg");
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+}
+
+/* End Index.html Specific Elements */
+
+
+/* Fonts Start */
+
+.mainfont {
+    /* Index.html - Header Font */
+    font-family: 'Caveat', cursive;
+    font-size: 72px;
+}
+
+.secondaryfont {
+    /* Index.html - sans-serif */
+    /* train.html - sans-serif */
+    font-family: 'Open Sans', sans-serif;
+    font-size: 24px;
+}
+
+.training_mainfont {
+    /* train.html - serif */
+    font-family: 'Mate SC', serif;
+    color:#76f8f8
+}
+
+.training_mainfontnc {
+    font-family: 'Mate SC', serif;
+}
+
+.training_secondaryfont {
+    font-family: 'Open Sans', sans-serif;
+    color: #ffffff
+}
+
+/* Fonts End */
+
+
+.maintrain {
+    background-image: url("../assets/images/raw/training_images_opt.jpg")
+}
+
+.car_cap_1 {
+    display: grid;
+    margin-top: -90%;
+    font-family: 'Caveat', cursive;
+    font-size: 100px;
+    color: #dff88c;
+    text-align: center;
+    justify-self: top;
+    align-self: center;
+
+}
+
+.car_subtext {
+    font-size: 24px;
+    text-align: center;
+}
+
+
+@keyframes gradient-animation {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%; 
+    }
+}
+
+@media screen and (max-width: 576px) {
+    .edward{
+        content:url("../assets/images/edward_front_page_opt.png");
+        width: 75%;
+        margin-left: 25%;
+        align-self: center;
+        justify-content: center;
+    }
+
+    .car_cap_1 {
+        font-size: 30px;
+    }
+
+    .carousel-inner > .carousel {
+        height: 25px !important;
+        width: 25px !important;
+    }
+
+}
+
+@media screen and (min-width: 577px) and (max-width: 992px) {
+
+    .edward {
+        display: block;
+        height: 75%;
+        width: 75%;
+        align-self: center;
+        justify-content: center;
+        margin-left: 40%;
+    }
+
+    #main_title {
+        visibility:hidden;
+    }
+
+    body {
+        margin: 0%;
+    }
+}
+
+@media screen and (min-width: 993px) {
+    .edward {
+        max-height: 10%
+    }
+    .car_cap_1 {
+        font-size: 74px;
+    }
+}
