@@ -1,0 +1,21 @@
+{%block header%}
+<header class="d-flex flex-wrap justify-content-center py-3 mx-0 border-bottom gradient_background">
+    <img src="../static/assets/images/raw/visions_lightbg.png" alt="Visions Logo" class="d-inline-block align-text-top" width="100" height="100">
+    <a href="/" class="d-flex align-items-center mb-1 mb-md-0 me-md-auto link-body-emphasis text-decoration-none">
+        <span class="px-5 mainfont">Visions</span>
+    </a>
+    <nav><ul class="nav nav-pills align-items-center">
+        <li class="nav-item" id="home_nav"><a href="/" class="nav-link secondaryfont">Home</a></li>
+        <li class="nav-item" id="train_nav"><a href="/train" class="nav-link secondaryfont">Train</a></li>
+        <li class="nav-item" id="food_nav"><a href="/food" class="nav-link secondaryfont">Food</a></li>
+        <li class="nav-item" id="vision_nav"><a href="/vision" class="nav-link secondaryfont">Vision</a></li>
+        <li class="nav-item" id="contact_nav"><a href="/contact" class="nav-link secondaryfont">Contact</a></li>
+        {% if username %}
+        <li class="nav-item" id="member_nav"><a href="/member" class="nav-link secondaryfont">Member</a></li>
+        {%  else  %}
+        <li class="nav-item" id="login_nav"><a href="/login" id="login_navref" class="nav-link secondaryfont">Login</a></li>
+        {% endif %}
+    </ul>
+    </nav>
+</header>
+{%endblock header%}

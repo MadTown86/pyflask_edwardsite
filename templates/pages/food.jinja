@@ -1,0 +1,114 @@
+{% extends "./base.jinja" %}
+{% block content %}
+<script>
+    document.getElementById('food_nav').classList.add('active')
+    document.getElementById('food_nav').classList.add('text-light')
+</script>
+<style>
+        .nav {--bs-nav-link-color: "#fff";}
+</style>
+<body id="food_body">
+    <div>
+        <div id="myCarousel" class="carousel slide mb-3" data-bs-ride="carousel">
+            <div class="carousel-indicators">
+                <button type="button" data-bs-target="#myCarousel" data-bs-slide-to="0" class="" aria-label="Slide 1"></button>
+                <button type="button" data-bs-target="#myCarousel" data-bs-slide-to="1" aria-label="Slide 2" class="active" aria-current="true"></button>
+                <button type="button" data-bs-target="#myCarousel" data-bs-slide-to="2" aria-label="Slide 3" class=""></button>
+            </div>
+            <div class="carousel-inner">
+                <div class="carousel-item">
+                    <img class="bd-placeholder-img" width="100%" height="100%" src="../static/assets/images/raw/food_green_great_opt.jpg" aria-hidden="true" preserveAspectRatio="xMidYMid slice" focusable="false"><rect width="100%" height="100%" fill="var(--bs-secondary-color)"></rect></svg>
+                    <div class="container">
+                    <div class="carousel-caption">
+                    </div>
+                    </div>
+                </div>
+                <div class="carousel-item active">
+                    <img class="bd-placeholder-img" width="100%" height="100%" src="../static/assets/images/raw/food_shops_opt.jpg" aria-hidden="true" preserveAspectRatio="xMidYMid slice" focusable="false"><rect width="100%" height="100%" fill="var(--bs-secondary-color)"></rect></svg>
+                    <div class="container">
+                    <div class="carousel-caption">
+                    </div>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <img class="bd-placeholder-img" width="100%" height="100%" src="../static/assets/images/raw/food_recipes_opt.jpg" aria-hidden="true" preserveAspectRatio="xMidYMid slice" focusable="false"><rect width="100%" height="100%" fill="var(--bs-secondary-color)"></rect></svg>
+                    <div class="container">
+                    <div class="carousel-caption align-items-center mb-6">
+                    </div>
+                    </div>
+                </div>
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#myCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#myCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+            </button>
+        </div>
+        
+        
+        <!-- Marketing messaging and featurettes
+        ================================================== -->
+        <!-- Wrap the rest of the page in another container to center all the content. -->
+        
+        <div class="container marketing">     
+            <!-- START THE FEATURETTES -->
+        
+            <hr class="featurette-divider">
+        
+            <div class="row featurette">
+            <div class="col-md-7">
+                <h2 class="featurette-heading fw-normal lh-1">Why Green Is Great? <span class="text-body-secondary"> Large Quantities Of The Good Stuff.</span></h2>
+                <p class="lead">The main reason I go true organic is because of the nutrient loss from GMO's.  They are genetically modifying produce to make more money, NOT to make it healthier.</p>
+                <p class="lead">All of the big agricultural firms have one main focus.  Although there is a lack of research supporting my claim that organic foods are better for you, I encourange you to give it the taste test.  Buy some organic foods for a while and then go back to their cheaper cousins and lets see which one you would rather have.</p>
+                <p class="lead">Plus, this way you are supporting local farming communities and ecologically sound farming practices instead of just giving more money to the big guys.</p>
+                
+            </div>
+            <div class="col-md-5">
+                <img class="bd-placeholder-img bd-placeholder-img-lg featurette-image img-fluid mx-auto" width="500" height="500" src="../static/assets/images/raw/organic_500x500_opt.jpg" role="img" focusable="false"><title>Placeholder</title><rect width="100%" height="100%" fill="var(--bs-secondary-bg)"></rect><text x="50%" y="50%" fill="var(--bs-secondary-color)" dy=".3em"></text></svg>
+            </div>
+            </div>
+        
+            <hr class="featurette-divider">
+        
+            <div class="row featurette">
+            <div class="col-md-7 order-md-2">
+                <h2 class="featurette-heading fw-normal lh-1">Lets Shop.<span class="text-body-secondary"> Green and Organic.</span></h2>
+                <p class="lead">I like to shop at Heinens for my veggies.  Just make sure to look for the label on the produce that starts with a 9 and then you will know its organic.</p>
+                <ul>Things I Like For My Morning Green Smoothie:
+                    <li>7 Organic Granny Smith Apples</li>
+                    <li>2 Organic Bunches of Celery</li>
+                    <li>1 Knob Of Ginger</li>
+                    <li>1 Bunch Organic Parsley</li>
+                    <li>1 Bunch Organic Cilantro</li>
+                </ul>
+                <p class="lead">You can blend a daily portion or mix it ahead and drink it in the morning on an empty stomach.  It is an antioxidant boost and full of fiber and goodness.</p>
+            </div>
+            <div class="col-md-5 order-md-1">
+                <img class="bd-placeholder-img bd-placeholder-img-lg featurette-image img-fluid mx-auto" width="500" height="500" src="../static/assets/images/raw/veggie_heines_500x500_opt.jpg" role="img" aria-label="Placeholder: 500x500" preserveAspectRatio="xMidYMid slice" focusable="false"><title>Placeholder</title><rect width="100%" height="100%" fill="var(--bs-secondary-bg)"></rect><text x="50%" y="50%" fill="var(--bs-secondary-color)" dy=".3em"></text></svg>
+            </div>
+            </div>
+        
+            <hr class="featurette-divider">
+        
+            <div class="row featurette">
+            <div class="col-md-7">
+                <h2 class="featurette-heading fw-normal lh-1">Healthy Eats. <span class="text-body-secondary">High Fiber, High Protein, High Nutrients, Low Calories</span></h2>
+                <p class="lead">I am a huge believer in healthy eating. It is no joke that a lot of what you eat is messing with your body!  One of the easiest ways to start FEELING healthier is to eat more green.  High antioxidant levels, helps your body regenerate, high fiber and lower in calories.</p>
+                <p class="lead">Not only that, but if you are looking to get fit, lose the fat and see those abs, then Green is a MUST.</p>
+                <p class="lead">There is no real secret here...eating kale, collard greens, spinach along with edamame and alfalfa sprouts will get you FULL and are high in fiber</p>
+            </div>
+            <div class="col-md-5">
+                <img class="bd-placeholder-img bd-placeholder-img-lg featurette-image img-fluid mx-auto" width="500" height="500" src="../static/assets/images/raw/edamame_500x500_opt.jpg" role="img" aria-label="Placeholder: 500x500" preserveAspectRatio="xMidYMid slice" focusable="false"><title>Placeholder</title><rect width="100%" height="100%" fill="var(--bs-secondary-bg)"></rect><text x="50%" y="50%" fill="var(--bs-secondary-color)" dy=".3em">500x500</text></svg>
+            </div>
+            </div>
+        
+            <hr class="featurette-divider">
+        
+            <!-- /END THE FEATURETTES -->
+        
+        </div><!-- /.container -->
+    </div>
+{% endblock content %}

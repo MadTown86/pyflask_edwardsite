@@ -1,0 +1,85 @@
+{% extends "./base.jinja" %}
+{% block content %}
+<body id="train_body">
+  <script>
+    document.getElementById('train_nav').classList.add('active')
+    document.getElementById('train_nav').classList.add('text-light')
+</script>
+<style>
+        .nav {--bs-nav-link-color: "#fff";}
+</style>
+<div id="train_page_div" class="container">
+    <div class="px-4 py-5 my-5 text-center">
+      <img class="d-block mx-auto mb-4" src="../static/assets/images/raw/visions_darkbg.png" alt="" width="100" height="100">
+      <h1 class="display-5 fw-bold training_mainfont shadow-lg">Training Your Way</h1>
+      <div class="col-lg-6 mx-auto">
+        <p class="lead mb-4 training_secondaryfont shadow-lg">Let's meet in person or chat via phone so I can customize a workout plan for your needs!</p>   
+          <a href="/contact"><button class="btn btn-primary btn-lg my-1 px-4 gap-3">Contact</button></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="container px-4 py-5">
+        <h2 class="pb-2 border-bottom training_mainfont shadow-lg">Training Philosophy</h2>
+        <p class="training_secondaryfont shadow-lg">I want to help you feel great and motivate you to improve your eating and fitness lifestyle first.  Then I want to be there every step of the way from where you start to where you want to finish.</p>
+        <p class="training_secondaryfont"></p>
+        <div class="row row-cols-1 row-cols-md-2 align-items-md-center g-5 py-5">
+          <div class="col d-flex flex-column align-items-start gap-2">
+            <h2 class="fw-bold mt-4 training_mainfont">Example Training Plans</h2>
+            <p class="training_secondaryfont">Each plan will be customized to your personal fitness goals, whether it be to lose weight, be toned, gain muscle or simply feel healthier.  I will help you get there.</p>
+            <a href="./contact" class="btn btn-primary btn-lg">Schedule Free Consultation</a>
+          </div>
+    
+          <div class="col">
+            <div class="row row-cols-1 row-cols-sm-2 g-4">
+              <div class="col d-flex flex-column gap-2">
+                <div class="feature-icon-small d-inline-flex align-items-center justify-content-center text-bg-primary bg-gradient fs-4 rounded-3 buttoncolor">
+                  <svg class="bi" width="1em" height="1em">
+                    <use xlink:href="#collection"></use>
+                  </svg>
+                </div>
+                <h4 class="fw-semibold mb-0 training_mainfont">I Plan - You Train</h4>
+                <p class="training_secondaryfont train_block">I custom tailor a plan for YOU to take to your gym.  We follow up and help you achieve.</p>
+              </div>
+    
+              <div class="col d-flex flex-column gap-2 bd-1">
+                <div class="feature-icon-small d-inline-flex align-items-center justify-content-center text-bg-primary bg-gradient fs-4 rounded-3">
+                  <svg class="bi" width="1em" height="1em">
+                    <use xlink:href="#gear-fill"></use>
+                  </svg>
+                </div>
+                <h4 class="fw-semibold mb-0 training_mainfont">I Plan - We Train - You Train</h4>
+                <p class="training_secondaryfont train_block">I make you a plan, we go to your gym for an excellent workout, you take it from there.</p>
+              </div>
+    
+              <div class="col d-flex flex-column gap-2">
+                <div class="feature-icon-small d-inline-flex align-items-center justify-content-center text-bg-primary bg-gradient fs-4 rounded-3">
+                  <svg class="bi" width="1em" height="1em">
+                    <use xlink:href="#speedometer"></use>
+                  </svg>
+                </div>
+                <h4 class="fw-semibold mb-0 training_mainfont">I Train You - All The Way! (Standard)</h4>
+                <p class="training_secondaryfont train_block">We set up a long term fitness plan with a weekly 90 minute workout one-on-one.  I develop a muscle group split to meet your needs, outline your workouts and train you in proper form.</p>
+                <p class="training_secondaryfont train_block">I create a basic meal plan for you and we build in dex scans at intervals to check progress.  I will keep things fresh and make sure you are seeing the change and body symmetry you are looking for.</p></p>
+              </div>
+    
+              <div class="col d-flex flex-column gap-2">
+                <div class="feature-icon-small d-inline-flex align-items-center justify-content-center text-bg-primary bg-gradient fs-4 rounded-3">
+                  <svg class="bi" width="1em" height="1em">
+                    <use xlink:href="#table"></use>
+                  </svg>
+                </div>
+                <h4 class="fw-semibold mb-0 training_mainfont">Competition Ready - (Professional)</h4>
+                <p class="training_secondaryfont train_block">Start off with a physique analysis including a dex scan and discuss target areas and competition requirements.</p>
+                <p class="training_secondaryfont train_block">I will develop a fitness plan for you to follow and we will train together to get you ready for the stage.</p>
+                <p class="training_secondaryfont train_block">You will get a specific daily meal plan to maintain variety while managing caloric and nutrient intake to match energy output and adjust as necessary.</p>
+                <p class="training_secondaryfont train_block">Lastly, I will help you with posing and stage presence.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}
