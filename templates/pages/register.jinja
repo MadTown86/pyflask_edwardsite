@@ -64,7 +64,7 @@
                {{locals.error_message}} 
             </div>
 
-            {% else if (!error_message && message) %}
+            {% elif not error_message and message %}
             <div class="alert alert-success mt-3" role="alert">
               Account created successfully
             </div>

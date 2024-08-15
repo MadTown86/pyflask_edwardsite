@@ -21,8 +21,8 @@
  </script>
  <article class="my-3 w-50 m-auto" id="floating-labels">
      
-    {% if locals.message %}
-     <h1 style="align-content: center"><%= locals.message %></h1>
+    {% if message %}
+     <h1 style="align-content: center">{{message}}</h1>
     {% else %}  
     <div class="bd-heading sticky-xl-top align-self-start mt-5 mb-3 mt-xl-0 mb-xl-2"></div>  
       <h3>Password Reset</h3>
@@ -39,7 +39,7 @@
          <div>
              {% if error_message  %}
              <div class="alert alert-danger mt-3" role="alert">
-               {%= locals.error_message %}
+               {{ error_message }}
              </div>
               {% endif %}
            </form>
