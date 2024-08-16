@@ -28,9 +28,9 @@
       <div class="bd-example-snippet bd-code-snippet">
 <div class="bd-example m-0 border-0">
   
-      <form method="post" action="api/register">
+      <form method="post" action="/register">
         <div class="form-floating w-50 mb-3">
-          <input type="email" name="email_register" class="form-control" id="floatingInput" placeholder="name@example.com">
+          <input type="email" name="email" class="form-control" id="floatingInput" placeholder="name@example.com">
           <label for="floatingInput">Email address</label>
         </div>
         <div class="form-floating w-50 mb-3">
@@ -48,27 +48,32 @@
     <div class="bd-example m-0 border-0">
             <div class="col-md-4">
               <label for="validationServer01" class="form-label">First name</label>
-              <input type="text" class="form-control" id="validationServer01" name="fn_register" value="" required="True">
+              <input type="text" class="form-control" id="validationServer01" name="fN" value="" required="True">
 
             </div>
             <div class="col-md-4">
               <label for="validationServer02" class="form-label">Last name</label>
-              <input type="text" class="form-control" id="validationServer02" value="" required="true" name="ln_register">
+              <input type="text" class="form-control" id="validationServer02" value="" required="true" name="lN">
             </div>
             <div class="col-12">
               <button class="btn btn-primary" type="submit" id="register_submit" style="margin-top: 20px;">Register</button>
             </div>
             <div></div>
-            {% if error_message %}
-            <div class="alert alert-danger mt-3" role="alert">
-               {{locals.error_message}} 
-            </div>
-
-            {% elif not error_message and message %}
-            <div class="alert alert-success mt-3" role="alert">
-              Account created successfully
-            </div>
-            {% endif %}
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  {% if category == 'danger' %}
+                      <div class="alert alert-danger mt-3" role="alert">
+                        {{message}} 
+                      </div>
+                  {% elif category == 'success' %}
+                      <div class="alert alert-success mt-3" role="alert">
+                        {{message}}
+                      </div>
+                  {% endif %}
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
           </form>
           
     </div>
