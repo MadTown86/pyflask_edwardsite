@@ -1,12 +1,22 @@
+# Description: This file contains the main code for the Flask Application
+
+# Importing Libraries
 import logging
 import os
+import flask
+
+# Importing Google Libraries
+import google_auth_oauthlib.flow
+
+
+# Importing Specific Libraries
 from os.path import join, dirname
 from dotenv import load_dotenv
 from logging.handlers import RotatingFileHandler
 from flask import Flask, render_template, \
 request, redirect, url_for, session, flash
+from flask_oauthlib.client import OAuth
 from flask_sqlalchemy import SQLAlchemy
-from authlib.integrations.flask_client import OAuth
 from werkzeug.security import generate_password_hash, check_password_hash
 import time as tt
 
@@ -16,21 +26,6 @@ load_dotenv()
 # Create Flask App
 app = Flask(__name__)
 
-# OAuth Config
-oauth = OAuth(app)
-google = oauth.register(
-    name='google',
-    client_id=os.getenv("GOOGLE_CLIENT_ID"),
-    client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
-    authorize_url='https://accounts.google.com/o/oauth2/auth',
-    authorize_params=None,
-    access_token_url='https://accounts.google.com/o/oauth2/token',
-    access_token_params=None,
-    refresh_token_url=None,
-    redirect_uri=os.getenv("GOOGLE_REDIRECT_URI"),
-    client_kwargs={'scope': 'openid profile email', 'jwks_uri': 'https://www.googleapis.com/oauth2/v3/certs'},
-)
-
 # MySQL Config
 app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URI")
@@ -39,6 +34,22 @@ app.config['SQLALCHEMY_POOL_TIMEOUT'] = 30
 app.config['SQLALCHEMY_POOL_RECYCLE'] = 1800
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+
+# Google Auth Config
+oauth = OAuth(app)
+google = oauth.remote_app(
+    'google',
+    consumer_key=os.getenv("GOOGLE_CLIENT_ID"),
+    consumer_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
+    request_token_params={
+        'scope': 'email'
+    },
+    base_url='https://www.googleapis.com/oauth2/v1/',
+    request_token_url=None,
+    access_token_method='POST',
+    access_token_url='https://accounts.google.com/o/oauth2/token',
+    authorize_url='https://accounts.google.com/o/oauth2/auth'
+)
 
 # MySQL User Class
 class User(db.Model):
@@ -63,7 +74,7 @@ class ResetRequest(db.Model):
     reset_code = db.Column(db.String(255), nullable=False)
 
 # Logging
-handler = RotatingFileHandler("C:\REPOSITORIES\\PYTHON\\pyflask_edwardsite\\flask_log", maxBytes=10000, backupCount=1)
+handler = RotatingFileHandler("D:/DEVELOPER_FILES/REPOSITORIES/logs/pyflask_log.log", maxBytes=10000, backupCount=1)
 handler.setLevel(logging.INFO)
 app.logger.addHandler(handler)
 
@@ -138,28 +149,26 @@ def login_page():
     else:
         return render_template("/pages/login.jinja", year=year)
 
-@app.route("/auth/google")
-def auth_google():
-    redirect_uri = url_for('auth_google_callback', _external=True)
-    return google.authorize_redirect(redirect_uri)
 
-@app.route("/auth/google/callback")
-def auth_google_callback():
-    token = google.authorize_access_token()
-    resp = google.get('userinfo')
-    user_info = resp.json()
-    user = User.query.filter_by(email=user_info['email']).first()
-    if not user:
-        user = User(email=user_info['email'], fN=user_info['given_name'], lN=user_info['family_name'], password='google')
-        db.session.add(user)
-        db.session.commit()
-    session['user'] = user.email
-    return redirect(url_for('login_page'))
 
 @app.route("/food")
 def food_page():
     return render_template("/pages/food.jinja", year=year)
+#endregion
 
+#region Google Auth Routes
+@app.route("/auth/google")
+def auth_google():
+    #Task: Implement Google Auth
+    return google.authorize(callback=url_for('auth_google_callback', _external=True))
+
+@app.route("/auth/google/callback")
+def auth_google_callback():
+    response = google.authorized_response()
+    if response is None or response.get('access_token') is None:
+        return 'Access denied: reason={} error={}'.format(request.args['error_reason'], request.args['error_description'])
+    session['google_token'] = (response['access_token'], '')
+    return redirect(url_for('index_page'))
 #endregion
 
 # Run App

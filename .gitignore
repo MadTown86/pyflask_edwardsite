@@ -3364,3 +3364,4 @@ pages/members/profile.ejs
 .env
 .env
 .env
+vars/googleauth.json
