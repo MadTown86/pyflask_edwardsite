@@ -148,7 +148,8 @@ def login_page():
 
 @app.route("/food")
 def food_page():
-    return render_template("/pages/food.jinja", year=year)
+    user = session.get('user')
+    return render_template("/pages/food.jinja", year=year, user=user)
 #endregion
 
 @app.route("/member", methods=['GET', 'POST'])
