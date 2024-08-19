@@ -17,7 +17,7 @@ import time as tt
 from authlib.integrations.flask_client import OAuth
 
 # Load Environment Variables
-load_dotenv()
+load_dotenv("vars\.env")
 
 # Create Flask App
 app = Flask(__name__)
@@ -25,7 +25,7 @@ app.secret_key = os.getenv("SECRET_KEY")
 
 # MySQL Config
 app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URI")
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
 app.config['SQLALCHEMY_POOL_SIZE'] = 10
 app.config['SQLALCHEMY_POOL_TIMEOUT'] = 30
 app.config['SQLALCHEMY_POOL_RECYCLE'] = 1800
@@ -66,7 +66,7 @@ class ResetRequest(db.Model):
     reset_code = db.Column(db.String(255), nullable=False)
 
 # Logging
-handler = RotatingFileHandler("D:/DEVELOPER_FILES/REPOSITORIES/logs/pyflask_log.log", maxBytes=10000, backupCount=1)
+handler = RotatingFileHandler(os.getenv("FILE_HANDLER_LOCATION"), maxBytes=10000, backupCount=1)
 handler.setLevel(logging.INFO)
 app.logger.addHandler(handler)
 
