@@ -5,26 +5,23 @@ import logging
 import os
 import flask
 
-# Importing Google Libraries
-import google_auth_oauthlib.flow
-
-
 # Importing Specific Libraries
 from os.path import join, dirname
 from dotenv import load_dotenv
 from logging.handlers import RotatingFileHandler
 from flask import Flask, render_template, \
 request, redirect, url_for, session, flash
-from flask_oauthlib.client import OAuth
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import time as tt
+from authlib.integrations.flask_client import OAuth
 
 # Load Environment Variables
 load_dotenv()
 
 # Create Flask App
 app = Flask(__name__)
+app.secret_key = os.getenv("SECRET_KEY")
 
 # MySQL Config
 app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
@@ -36,19 +33,14 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 # Google Auth Config
+CONF_URL = 'https://accounts.google.com/.well-known/openid-configuration'
 oauth = OAuth(app)
-google = oauth.remote_app(
-    'google',
-    consumer_key=os.getenv("GOOGLE_CLIENT_ID"),
-    consumer_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
-    request_token_params={
-        'scope': 'email'
-    },
-    base_url='https://www.googleapis.com/oauth2/v1/',
-    request_token_url=None,
-    access_token_method='POST',
-    access_token_url='https://accounts.google.com/o/oauth2/token',
-    authorize_url='https://accounts.google.com/o/oauth2/auth'
+oauth.register(
+    name='google',
+    client_id=os.getenv("GOOGLE_CLIENT_ID"),
+    client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
+    server_metadata_url=CONF_URL,
+    client_kwargs={'scope': 'openid email profile'}
 )
 
 # MySQL User Class
@@ -84,26 +76,31 @@ year = tt.strftime("%Y")
 #region Basic Routes
 @app.route("/")
 def index_page():
-    return render_template("pages/index.jinja", year=year)
+    user = session.get('user')
+    return render_template("pages/index.jinja", year=year, user=user)
 
 
 @app.route("/vision")
 def vision_page():
-    return render_template("/pages/vision.jinja", year=year)
+    user = session.get('user')
+    return render_template("/pages/vision.jinja", year=year, user=user)
 
 
 @app.route("/train")
 def train_page():
-    return render_template("/pages/train.jinja", year=year)
+    user = session.get('user')
+    return render_template("/pages/train.jinja", year=year, user=user)
 
 
 @app.route("/reset_request")
 def reset_request_page():
-    return render_template("/pages/reset_request.jinja", year=year)
+    user = session.get('user')
+    return render_template("/pages/reset_request.jinja", year=year, user=user)
 
 @app.route("/contact")
 def contact_page():
-    return render_template("/pages/contact.jinja", year=year)
+    user = session.get('user')
+    return render_template("/pages/contact.jinja", year=year, user=user)
 
 
 @app.route("/register", methods=['GET', 'POST'])
@@ -149,27 +146,44 @@ def login_page():
     else:
         return render_template("/pages/login.jinja", year=year)
 
-
-
 @app.route("/food")
 def food_page():
     return render_template("/pages/food.jinja", year=year)
 #endregion
 
+@app.route("/member", methods=['GET', 'POST'])
+def member_page():
+    user = session.get('user')
+    if request.method == 'GET':
+        user = session.get('user')
+        if user:
+            return render_template("/pages/member.jinja", year=year, user=user)
+        else:
+            return redirect(url_for('login_page'))
+    elif request.method == 'POST':
+        #TODO Write code for post method on member page, perhaps allow password change right there.
+        return redirect(url_for('member_page'))
+        
+
 #region Google Auth Routes
 @app.route("/auth/google")
 def auth_google():
-    #Task: Implement Google Auth
-    return google.authorize(callback=url_for('auth_google_callback', _external=True))
+    redirect_uri = url_for('auth_google_callback', _external=True)
+    return oauth.google.authorize_redirect(redirect_uri)
 
 @app.route("/auth/google/callback")
 def auth_google_callback():
-    response = google.authorized_response()
-    if response is None or response.get('access_token') is None:
-        return 'Access denied: reason={} error={}'.format(request.args['error_reason'], request.args['error_description'])
-    session['google_token'] = (response['access_token'], '')
+    token = oauth.google.authorize_access_token()
+    session['user'] = token['userinfo']
+    print(session['user'].email)
     return redirect(url_for('index_page'))
 #endregion
+
+# Logout Route
+@app.route("/logout")
+def logout():
+    session.pop('user', None)
+    return redirect(url_for('index_page'))
 
 # Run App
 if __name__ == "__main__":

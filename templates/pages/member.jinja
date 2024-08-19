@@ -10,9 +10,9 @@
   <body id="member_body">
     <main class="form-signin w-50 m-auto">
       
-     <img class="mb-4" src="../assets/images/raw/visions_lightbg.png" alt="logo" width="100" height="100">
-     {% if username %}
-     <h1 class="h3 mb-3 fw-normal">Welcome {{locals.username}} </h1>
+     <img class="mb-4" src="/static/assets/images/raw/visions_lightbg.png" alt="logo" width="100" height="100">
+     {% if user %}
+     <h1 class="h3 mb-3 fw-normal">Welcome {{user.email}} </h1>
       {% endif %}
      <hr>
     <p>
