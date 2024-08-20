@@ -15,6 +15,7 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import time as tt
 from authlib.integrations.flask_client import OAuth
+from flask_mail import Mail, Message
 
 # Load Environment Variables
 load_dotenv("vars\.env")
@@ -31,6 +32,15 @@ app.config['SQLALCHEMY_POOL_TIMEOUT'] = 30
 app.config['SQLALCHEMY_POOL_RECYCLE'] = 1800
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+
+# Flask_Mail Config
+mail = Mail(app)
+app.config['MAIL_SERVER'] = os.getenv("MAIL_SERVER")
+app.config['MAIL_PORT'] = os.getenv("MAIL_PORT")
+app.config['MAIL_USERNAME'] = os.getenv("MAIL_USER")
+app.config['MAIL_PASSWORD'] = os.getenv("MAIL_PASSWORD")
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
 
 # Google Auth Config
 CONF_URL = 'https://accounts.google.com/.well-known/openid-configuration'
@@ -59,11 +69,16 @@ class Message(db.Model):
     email = db.Column(db.String(255), nullable=False)
     message = db.Column(db.Text, nullable=False)
 
+# MySQL Reset Request Class
 class ResetRequest(db.Model):
     __tablename__ = 'password_resets'
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     email = db.Column(db.String(255), nullable=False)
-    reset_code = db.Column(db.String(255), nullable=False)
+    reset_token = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.DateTime, default=tt.strftime("%Y-%m-%d %H:%M:%S"))
+    expires_at = db.Column(db.DateTime, default=tt.strftime("%Y-%m-%d %H:%M:%S"))
+
 
 # Logging
 handler = RotatingFileHandler(os.getenv("FILE_HANDLER_LOCATION"), maxBytes=10000, backupCount=1)
@@ -79,23 +94,101 @@ def index_page():
     user = session.get('user')
     return render_template("pages/index.jinja", year=year, user=user)
 
-
+# Route To Vision Page
 @app.route("/vision")
 def vision_page():
     user = session.get('user')
     return render_template("/pages/vision.jinja", year=year, user=user)
 
-
+# Route To Train Page
 @app.route("/train")
 def train_page():
     user = session.get('user')
     return render_template("/pages/train.jinja", year=year, user=user)
 
-
-@app.route("/reset_request")
+# Route To Reset Request Page
+@app.route("/reset_request", methods=['GET', 'POST'])
 def reset_request_page():
     user = session.get('user')
-    return render_template("/pages/reset_request.jinja", year=year, user=user)
+    if user:
+        return redirect(url_for('reset_page'))
+    else:
+        if request.method == 'GET':
+            return render_template("/pages/reset_request.jinja", year=year, user=user)
+        elif request.method == 'POST':
+            try:
+                user_email = request.form['email_reset_password']
+                print("USER-EMAIL\n", user_email)
+                result = db.session.execute(db.select(User).filter_by(email=user_email)).scalars().all()
+                print(result.__properties__)
+                if not user:
+                    flash('User Not Found', 'danger')
+                    return redirect(url_for('reset_request_page'))
+                else:
+                    reset_code = os.urandom(16).hex()
+                    msg = Message(f'Please click the link to reset your password <a href="www.visions.fit/email_reset/{reset_code}">click here</a>', recipients=[request.form['email']])
+                    reset_request = ResetRequest(email=user_email, reset_code=reset_code)
+                    try:
+                        db.session.add(reset_request)
+                        db.session.commit()
+                        mail.send(msg)
+                        flash('Reset Email Sent', 'success')
+                        return redirect(url_for('reset_request_page'))
+                    except Exception as e:
+                        print(e)
+                        db.session.rollback()
+                        flash('Reset Email Failed - User Not Found', 'danger')
+                        return redirect(url_for('reset_request_page'))
+            except Exception as e:
+                print(e)
+                flash('Reset Email Failed', 'danger')
+                return redirect(url_for('reset_request_page'))
+                
+# Route To Reset Page From Email
+@app.route("/email_reset/<reset_code>", methods=['GET', 'POST'])
+def email_reset_page(reset_code):
+    user = session.get('user')
+    if request.method == 'GET':
+        response = db.session.execute(db.select(ResetRequest).filter_by(reset_code=reset_code)).scalar_one()
+        if not response:
+            flash('Reset Request Not Found', 'danger')
+            return redirect(url_for('reset_request_page'))
+        elif response.expires_at < tt.strftime("%Y-%m-%d %H:%M:%S"):
+            flash('Reset Request Expired', 'danger')
+            return redirect(url_for('reset_request_page'))
+        else:
+            user = db.get_or_404(User, response.user_id)
+            return render_template("/pages/reset.jinja", year=year, user=user)
+    elif request.method == 'POST':
+        password = request.form['password']
+        password = generate_password_hash(password)
+        reset_request = db.session.execute(db.select(ResetRequest).filter_by(reset_code=reset_code)).scalar_one()
+        if reset_request:
+            user = db.session.execute(db.select(User).filter_by(email=reset_request.email)).scalar_one()
+            user.password = password
+            db.session.delete(reset_request)
+            db.session.commit()
+            flash('Password Reset Successful', 'success')
+            return redirect(url_for('login_page'))
+        else:
+            flash('Password Reset Failed', 'danger')
+            return redirect(url_for('email_reset_page'))
+                              
+@app.route("/reset", methods=['GET', 'POST'])
+def reset_page():
+    user = session.get('user')
+    if not user:
+        return redirect(url_for('login_page'))
+    else:
+        if request.method == 'GET':
+            return render_template("/pages/reset.jinja", year=year, user=user)
+        elif request.method == 'POST':
+            password = request.form['password']
+            user.password = generate_password_hash(password)
+            db.session.commit()
+            flash('Password Reset Successful', 'success')
+            return redirect(url_for('login_page'))
+
 
 @app.route("/contact")
 def contact_page():
