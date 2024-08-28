@@ -21,9 +21,9 @@
    }
 
  </script>
- {% if user %}
- <h1 style="text-align:center;">Hi User: {{user}}</h1>
- {% endif %}
+ {% if user != none %}
+ <h1 style="text-align:center;">Hi User: {{user.email}}</h1>
+
  <article class="my-3 w-50 m-auto" id="floating-labels">
      <div class="bd-heading sticky-xl-top align-self-start mt-5 mb-3 mt-xl-0 mb-xl-2">
        <h3>Password Reset</h3>
@@ -42,18 +42,24 @@
              <label for="floatingPassword">Confirm Password</label>
              <span id="message"></span>
            </div>
-            <button type="submit" id="register_submit" class="btn btn-primary" formmethod="patch" formaction="/api/reset">Submit</button>
+            <button type="submit" id="register_submit" class="btn btn-primary" formmethod="patch" formaction="/reset">Submit</button>
        <article class="my-5" id="validation">
          <div>
-             {% if error_message %}
-             <div class="alert alert-danger mt-3" role="alert">
-                  {{ error_message }} 
-             </div>
-             {% else if !error_message && message %}
-             <div class="alert alert-success mt-3" role="alert">
-               Password Changed Successfully
-             </div>
-             {% endif %}
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  {% if category == 'danger' %}
+                  <div class="alert alert-danger mt-3" role="alert">
+                        {{ error_message }} 
+                  </div>
+                  {% else %}
+                  <div class="alert alert-success mt-3" role="alert">
+                    Password Changed Successfully
+                  </div>
+                  {% endif %}
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
            </form>
      </div>
    </div>
@@ -64,5 +70,8 @@
  </div>
  
      </div>
-   </article>
+   </article> 
+  {% else %}
+  <h1 style="text-align:center;">Error - No User Defined Contact Site Admin</h1>
+{% endif %}
  {% endblock content %}

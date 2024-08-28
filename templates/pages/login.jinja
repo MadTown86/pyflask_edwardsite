@@ -8,6 +8,9 @@
 <style>
         .nav {--bs-nav-link-color: "#fff";}
 </style>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+
 <body id="login_body">   
   
 <main class="form-signin w-50 m-auto">
@@ -35,7 +38,7 @@
     <div><h1 class="h3 mb-3 fw-normal">Or E-mail and Password</h1></div>
     
     <div class="form-floating">
-      <input type="email" name="username" class="form-control" id="floatingInput" placeholder="name@example.com" style="background-image: url(&quot;chrome-extension://ibkoenhablealnikeefmjineccmgegmh/src/images/icons/icon-32-i.png&quot;) !important; background-position: calc(99% - 12px) 50% !important; background-size: 16px 16px !important; background-repeat: no-repeat !important; transition: background-position 0s ease 0s, background-size 0s ease 0s !important; cursor: default;">
+      <input type="email" name="email" class="form-control" id="floatingInput" placeholder="name@example.com" style="background-image: url(&quot;chrome-extension://ibkoenhablealnikeefmjineccmgegmh/src/images/icons/icon-32-i.png&quot;) !important; background-position: calc(99% - 12px) 50% !important; background-size: 16px 16px !important; background-repeat: no-repeat !important; transition: background-position 0s ease 0s, background-size 0s ease 0s !important; cursor: default;">
       <label for="floatingInput">Email address</label>
     </div>
     <div class="form-floating">
@@ -43,11 +46,24 @@
       <label for="floatingPassword">Password</label>
     </div>
 
-    {% if error_message %}
-      <div class="alert alert-danger mt-3" role="alert">
-         {{error_message }}
+    {% if messages %}
+    {% for category, message in messages %}
+      {% if category == 'danger' %}
+        <div class="alert alert-danger mt-3" role="alert">
+         {{ message }}
+        </div>
+      {% elif category == 'success' %}
+      <div class="alert alert-success mt-3" role="alert">
+        {{ message }}
       </div>
+      {% else %}
+      <div class="alert alert-success mt-3" role="alert">
+        Error!
+      </div>
+      {% endif %}
+    {% endfor %}
     {% endif %}
+    {% endwith %}
       
 
     <div class="form-check text-start my-3">

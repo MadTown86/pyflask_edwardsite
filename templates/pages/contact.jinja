@@ -9,22 +9,31 @@
             .nav {--bs-nav-link-color: "#fff";}
     </style>
       <div class="container contact">
-    
-        {% if sent %}
-          <h1 style="text-align:center;margin-top:100px;">Message Sent!</h1>
+      {% with messages = get_flashed_messages(with_categories=true)%}
+        {% if messages %}
+          {% for category, message in messages %}
+            {% if category == 'success' %}
+              <h1 style="text-align:center;margin-top:100px;">{{message}}</h1>
+              </form>
+            {% else %}
+              <div class="alert alert-danger mt-3" role="alert">
+                      {{ message }}
+              </div>
+            {% endif%}
+          {% endfor %}
+        {% else %}
+          <form class="py-3" id="newPostForm" method="post" action="/contact">
+              <label for="fandl_name">First and Last Name</label>
+              <input type="text" name="name" placeholder="Enter First and Last Name" required>
+              <label for="email">E-mail Address</label>
+              <input type="email" name="email" placeholder="Enter E-mail Address" required>
+              <textarea name="message" placeholder="Write your message here!" required rows="10"></textarea>
+              <button class="full-width" id="newPostBtn" type="submit">
+              Submit
+            </button>
           </form>
-          {% else %}
-            <form class="py-3" id="newPostForm" method="post" action="/api/contact">
-                <label for="fandl_name">First and Last Name</label>
-                <input type="text" name="name" placeholder="Enter First and Last Name" required>
-                <label for="email">E-mail Address</label>
-                <input type="text" name="email" placeholder="Enter E-mail Address" required>
-                <textarea name="message" placeholder="Write your message here!" required rows="10"></textarea>
-                <button class="full-width" id="newPostBtn" type="submit">
-                Submit
-              </button>
-            </form>
-          {% endif %}
+        {% endif %}
+      {% endwith %}
       </div>  
 </body>
 {% endblock content %}
