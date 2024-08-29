@@ -69,6 +69,7 @@ class User(db.Model):
     fN = db.Column(db.String(255), nullable=False)
     lN = db.Column(db.String(255), nullable=False)
     password = db.Column(db.String(255), nullable=False)
+    user_type = db.Column(db.String(50), nullable=False)
 
 # MySQL message Class
 class MessageDB(db.Model):
@@ -131,7 +132,7 @@ def train_page():
 @app.route("/reset_request", methods=['GET', 'POST'])
 def reset_request_page():
     user = session.get('user')
-    if user:
+    if user and user.type != 'google':
         return render_template("/pages/reset_request.jinja", year=year, user=user)
     else:
         if request.method == 'GET':
@@ -147,7 +148,8 @@ def reset_request_page():
                     reset_code = os.urandom(16).hex()
                     try:
                         msg = Message(subject="Reset Request - Visions.Fit", \
-                                      body=f'Dear User:\nPlease click the link below to reset your password:\n', html=f'<html><p>Dear User:</p><p>Please click the link below to reset your password:</p><p><a href="www.visions.fit/email_reset/{reset_code}">click here</a></p></html>', \
+                                      body=f'Dear User:\nPlease click the link below to reset your password:\n', \
+                                        html=f'<html><p>Dear User:</p><p>Please click the link below to reset your password:</p><p><a href="www.visions.fit/email_reset/{reset_code}">click here</a></p></html>', \
                                         recipients=[user_email])
                         print(msg)
                         reset_request = ResetRequest(user_id=user.id, reset_token=reset_code)
@@ -195,6 +197,7 @@ def reset_page():
         return redirect(url_for('login_page'))
     else:
         if request.method == 'GET':
+            print(user)
             return render_template("/pages/reset.jinja", year=year, user=user)
         elif request.method == 'PATCH':
             password = request.form['password']
@@ -238,20 +241,20 @@ def contact_page():
 
 @app.route("/register", methods=['GET', 'POST'])
 def register_page():
-
     if request.method == 'POST':
         email = request.form['email']
         fN = request.form['fN']
         lN = request.form['lN']
         password = request.form['password_register_verify']
         password = generate_password_hash(password)
-        user = User(email=email, fN=fN, lN=lN, password=password)
+        user = User(email=email, fN=fN, lN=lN, password=password, user_type='native')
         try:
             db.session.add(user)
             db.session.commit()
             flash('User Registered Successfully', 'success')
             return redirect(url_for('login_page'))
-        except:
+        except Exception as e:
+            print(e)
             db.session.rollback()
             flash('User Already Exists', 'danger')
             return redirect(url_for('register_page'))
@@ -279,8 +282,8 @@ def login_page():
             flash("User Not Found or Database Error", 'danger')
             return redirect(url_for('login_page'))
         if user and check_password_hash(user.password, password):
-            session['user'] = user.email
-            return render_template('pages/member.jinja', year=year, user=user)
+            session['user'] = user.email, user.user_type
+            return render_template('pages/member.jinja', year=year, user=user, user_type=user.user_type)
         else:
             print("Failed Here")
             flash('User Login Failed', 'danger')
@@ -323,8 +326,17 @@ def auth_google():
 def auth_google_callback():
     token = oauth.google.authorize_access_token()
     session['user'] = token['userinfo']
-    print(session['user'].email)
-    return redirect(url_for('index_page'))
+    email = session['user'].email
+    user_fN = session['user'].given_name
+    user_lN = session['user'].family_name
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        user = User(email=email, fN=user_fN, lN=user_lN, password='google', user_type='google')
+        db.session.add(user)
+        db.session.commit()
+        return redirect(url_for('member_page'))
+    else:
+        return redirect(url_for('member_page'))
 #endregion
 
 # Logout Route
