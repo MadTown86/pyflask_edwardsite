@@ -161,7 +161,7 @@ def train_page():
 @app.route("/reset_request", methods=['GET', 'POST'])
 def reset_request_page():
     user = session.get('user')
-    if user:
+    if user and user.type != 'google':
         return render_template("/pages/reset_request.jinja", year=year, user=user)
     else:
         if request.method == 'GET':
@@ -239,6 +239,7 @@ def reset_page():
     else:
         print("User Found")
         if request.method == 'GET':
+            print(user)
             return render_template("/pages/reset.jinja", year=year, user=user)
         elif request.method == 'POST':
             if not user:
@@ -306,13 +307,14 @@ def register_page():
         lN = request.form['lN']
         password = request.form['password_register_verify']
         password = generate_password_hash(password)
-        user = User(email=email, fN=fN, lN=lN, password=password)
+        user = User(email=email, fN=fN, lN=lN, password=password, user_type='native')
         try:
             db.session.add(user)
             db.session.commit()
             flash('User Registered Successfully', 'success')
             return redirect(url_for('login_page'))
-        except:
+        except Exception as e:
+            print(e)
             db.session.rollback()
             flash('User Already Exists', 'danger')
             return redirect(url_for('register_page'))
@@ -430,8 +432,17 @@ def auth_google():
 def auth_google_callback():
     token = oauth.google.authorize_access_token()
     session['user'] = token['userinfo']
-    print(session['user'].email)
-    return redirect(url_for('index_page'))
+    email = session['user'].email
+    user_fN = session['user'].given_name
+    user_lN = session['user'].family_name
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        user = User(email=email, fN=user_fN, lN=user_lN, password='google', user_type='google')
+        db.session.add(user)
+        db.session.commit()
+        return redirect(url_for('member_page'))
+    else:
+        return redirect(url_for('member_page'))
 #endregion
 
 # Logout Route
