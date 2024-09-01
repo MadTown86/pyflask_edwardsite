@@ -69,6 +69,7 @@ class User(db.Model):
     fN = db.Column(db.String(255), nullable=False)
     lN = db.Column(db.String(255), nullable=False)
     password = db.Column(db.String(255), nullable=False)
+    user_type = db.Column(db.String(255), nullable=False, default='native')
 
 # MySQL message Class
 class MessageDB(db.Model):
@@ -87,6 +88,35 @@ class ResetRequest(db.Model):
     # expires_at = db.Column(db.DateTime, default=tt.strftime("%Y-%m-%d %H:%M:%S"))
     created_at = db.Column(db.DateTime, default=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"))
     expires_at = db.Column(db.DateTime, default=(datetime.utcnow() + timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S"))
+
+# MySQL Schedule Class
+class Employee(db.Model):
+    __tablename__ = 'employees'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    department = db.Column(db.String(255), nullable=False)
+    email = db.Column(db.String(255), nullable=False)
+    phone = db.Column(db.String(255), nullable=False)
+    hire_date = db.Column(db.DateTime, nullable=False)
+    salary = db.Column(db.Float, nullable=False)
+
+# MySQL Services Class
+class Services(db.Model):
+    __tablename__ = 'services'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    price = db.Column(db.Float, nullable=False)
+
+# MySQL Appointments Class
+class Appointments(db.Model):
+    __tablename__ = 'appointments'
+    id = db.Column(db.Integer, primary_key=True)
+    employee_id = db.Column(db.Integer, db.ForeignKey('employees.id'), nullable=False)
+    service_id = db.Column(db.Integer, db.ForeignKey('services.id'), nullable=False)
+    customer_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    appointment_date = db.Column(db.DateTime, nullable=False)
+    appointment_time = db.Column(db.Time, nullable=False)
 
 
 # Logging
@@ -139,30 +169,38 @@ def reset_request_page():
         elif request.method == 'POST':
             try:
                 user_email = request.form['email_reset_password']
-                user = User.query.filter_by(email=user_email).first()
-                if not user:
+                users = User.query.filter_by(email=user_email).all()
+                if not users:
                     flash('User Not Found', 'danger')
                     return redirect(url_for('reset_request_page'))
                 else:
-                    reset_code = os.urandom(16).hex()
-                    try:
-                        msg = Message(subject="Reset Request - Visions.Fit", \
-                                      body=f'Dear User:\nPlease click the link below to reset your password:\n', html=f'<html><p>Dear User:</p><p>Please click the link below to reset your password:</p><p><a href="www.visions.fit/email_reset/{reset_code}">click here</a></p></html>', \
-                                        recipients=[user_email])
-                        print(msg)
-                        reset_request = ResetRequest(user_id=user.id, reset_token=reset_code)
-                        db.session.add(reset_request)
-                        db.session.commit()
-                        print("sending mail")
-                        with mail.connect() as conn:
-                            conn.send(msg)
-                        print("mail sent")
-                        flash('Reset Email Sent', 'success')
-                        return redirect(url_for('reset_request_page'))
-                    except Exception as e:
-                        print(e)
-                        db.session.rollback()
-                        flash('Reset Email Failed - Error In Sending Mail', 'danger')
+                    user_types = []
+                    for user in users:
+                        if user.user_type == 'native':
+                            reset_code = os.urandom(16).hex()
+                            try:
+                                msg = Message(subject="Reset Request - Visions.Fit", \
+                                            body=f'Dear User:\nPlease click the link below to reset your password:\n', html=f'<html><p>Dear User:</p><p>Please click the link below to reset your password:</p><p><a href="www.visions.fit/email_reset/{reset_code}">click here</a></p></html>', \
+                                                recipients=[user_email])
+                                print(msg)
+                                reset_request = ResetRequest(user_id=user.id, reset_token=reset_code)
+                                db.session.add(reset_request)
+                                db.session.commit()
+                                print("sending mail")
+                                with mail.connect() as conn:
+                                    conn.send(msg)
+                                print("mail sent")
+                                flash('Reset Email Sent', 'success')
+                                return redirect(url_for('reset_request_page'))
+                            except Exception as e:
+                                print(e)
+                                db.session.rollback()
+                                flash('Reset Email Failed - Error In Sending Mail', 'danger')
+                                return redirect(url_for('reset_request_page'))
+                        else:
+                            user_types.append(user.user_type)
+                            continue
+                    flash(f'User Types Cannot Be Reset: {user_types}', 'danger')
                     return redirect(url_for('reset_request_page'))
             except Exception as e:
                 print(e)
@@ -173,35 +211,59 @@ def reset_request_page():
 @app.route("/email_reset/<reset_code>", methods=['GET'])
 def email_reset_page(reset_code):
     reset_code = reset_code
+    print(reset_code)
     user = session.get('user')
     if request.method == 'GET':
-        user_reference = ResetRequest.query.filter_by(reset_token=reset_code).first()
-        print(user_reference.user_id, user_reference.expires_at, user_reference.created_at)
-        if not user_reference:
+        try:
+            user_reference = ResetRequest.query.filter_by(reset_token=reset_code).first()
+            print(user_reference.user_id, user_reference.expires_at, user_reference.created_at)
+            if user_reference.expires_at < datetime.utcnow():
+                flash('Reset Request Expired', 'danger')
+                return redirect(url_for('reset_request_page'))
+            else:
+                user = User.query.filter_by(id=user_reference.user_id).first()
+                session['user'] = user.email, user.id
+                return render_template("/pages/reset.jinja", year=year, user=user)
+        except Exception as e:
+            print(e)
             flash('Reset Request Not Found', 'danger')
             return redirect(url_for('reset_request_page'))
-        elif user_reference.expires_at < datetime.utcnow():
-            flash('Reset Request Expired', 'danger')
-            return redirect(url_for('reset_request_page'))
-        else:
-            user = User.query.filter_by(id=user_reference.user_id).first()
-            print()
-            return render_template("/pages/reset.jinja", year=year, user=user)
                               
-@app.route("/reset", methods=['GET', 'PATCH'])
+@app.route("/reset", methods=['GET', 'POST'])
 def reset_page():
     user = session.get('user')
+    print(user)
     if not user:
+        print("No User")
         return redirect(url_for('login_page'))
     else:
+        print("User Found")
         if request.method == 'GET':
             return render_template("/pages/reset.jinja", year=year, user=user)
-        elif request.method == 'PATCH':
-            password = request.form['password']
-            user.password = generate_password_hash(password)
-            db.session.commit()
-            flash('Password Reset Successful', 'success')
-            return redirect(url_for('login_page'))
+        elif request.method == 'POST':
+            if not user:
+                flash('User Not Found', 'danger')
+                return redirect(url_for('login_page'))
+            else:
+                try:
+                    user = User.query.filter_by(id=user['id']).first()
+                except Exception as e:
+                    print("Exception Querying User:", e.orig, e.params)
+                    flash('User Not Found', 'danger')
+                    return redirect(url_for('login_page'))
+                try:
+                    password = request.form['password_reset_verify']
+                    user.password = generate_password_hash(password)
+                    db.session.add(user)
+                    db.session.commit()
+                    flash('Password Reset Successful', 'success')
+                    return redirect(url_for('login_page'))
+                except Exception as e:
+                    print("Database Exception When Resetting Password", e.orig, e.params)
+                    db.session.rollback()
+                    flash('Password Reset Failed - Contact Site Administrator', 'danger')
+                    return redirect(url_for('reset_page'))
+        
 
 
 @app.route("/contact", methods=['GET', 'POST'])
@@ -238,7 +300,6 @@ def contact_page():
 
 @app.route("/register", methods=['GET', 'POST'])
 def register_page():
-
     if request.method == 'POST':
         email = request.form['email']
         fN = request.form['fN']
@@ -270,20 +331,27 @@ def login_page():
         email = request.form['email']
         password = request.form['password']
         try:
-            user = User.query.filter_by(email=email).first()
+            users = User.query.filter_by(email=email).all()
         except Exception as e:
             print(e)
             flash('Error Fetching User', 'danger')
             return redirect(url_for('login_page'))
-        if not user:
+        if not users:
             flash("User Not Found or Database Error", 'danger')
             return redirect(url_for('login_page'))
-        if user and check_password_hash(user.password, password):
-            session['user'] = user.email
-            return render_template('pages/member.jinja', year=year, user=user)
         else:
+            user_types = []
+            for user in users:
+                print(user.id, user.email, user.user_type)
+                if user.user_type == 'native':
+                    if user and check_password_hash(user.password, password):
+                        session['user'] = {"email":user.email, "id":user.id}
+                        return render_template('pages/member.jinja', year=year, user=user)
+                else:
+                    user_types.append(user.user_type)
+                    continue
             print("Failed Here")
-            flash('User Login Failed', 'danger')
+            flash(f'No Login Information Found: Try The Following OAUTH Connections if listed: {user_types}', 'danger')
             return redirect(url_for('login_page'))
     if request.method == 'GET':
         user = session.get('user')
@@ -311,6 +379,45 @@ def member_page():
     elif request.method == 'POST':
         #TODO Write code for post method on member page, perhaps allow password change right there.
         return redirect(url_for('member_page'))
+    
+@app.route("/schedule", methods=['GET', 'POST'])
+def schedule_page():
+    user = session.get('user')
+    if request.method == 'GET':
+        return render_template("/pages/schedule.jinja", year=year, user=user)
+    elif request.method == 'POST':
+        return redirect(url_for('schedule_page'))
+    
+@app.route("/delete", methods=['GET', 'POST'])
+def delete_page():
+    user = session.get('user')
+    if request.method == 'GET':
+        if user:
+            return render_template("/pages/delete.jinja", year=year, user=user)
+        else:
+            return redirect(url_for('login_page'))
+    elif request.method == 'POST':
+        if user:
+            confirmation = request.form['delete_confirmation']
+            if confirmation != 'DELETE':
+                flash('Confirmation Failed', 'danger')
+                return redirect(url_for('delete_page'))
+            else:
+                try:
+                    user = User.query.filter_by(id=user['id']).first()
+                    db.session.delete(user)
+                    db.session.commit()
+                    session.pop('user', None)
+                    flash('User Deleted Successfully', 'success')
+                    return redirect(url_for('login_page'))
+                except Exception as e:
+                    print(e)
+                    db.session.rollback()
+                    flash('Error Deleting User', 'danger')
+                    return redirect(url_for('delete_page'))
+        else:
+            flash('User Not Found', 'danger')
+            return redirect(url_for('login_page'))
         
 
 #region Google Auth Routes

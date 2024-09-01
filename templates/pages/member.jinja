@@ -9,14 +9,22 @@
   </style>
   <body id="member_body">
     <main class="form-signin w-50 m-auto">
-      
+    {% if user %}
+    <h1 class="h3 mb-3 fw-normal">Welcome {{user.email}} </h1>
+    <hr>
+    {% endif %}
      <img class="mb-4" src="/static/assets/images/raw/visions_lightbg.png" alt="logo" width="100" height="100">
      {% with messages = get_flashed_messages(with_categories=true)%}
      {% for category, message in messages %}
-     {% if user %}
-     <h1 class="h3 mb-3 fw-normal">Welcome {{user.email}} </h1>
+      {% if category == 'danger' %}
+      <div class="alert alert-danger mt-3" role="alert">
+        {{ message }}
+      </div>
+      {% else %}
+      <div class="alert alert-success mt-3" role="alert">
+        {{ message }}
+      </div>
       {% endif %}
-     <hr>
      {% endfor %}
      {% endwith%}
     <p>
@@ -26,8 +34,8 @@
     </p>
     <p><h3>Account Settings</h3><hr></p>
     <p>
-      <form class="mb-5" method="get" action="/update">
-    <button class="btn btn-primary w-15 my-2 py-2" type="submit" name="update_btn" formaction="/update">Update Password</button>
+      <form class="mb-5" method="get" action="/reset">
+    <button class="btn btn-primary w-15 my-2 py-2" type="submit" name="update_btn" formaction="/reset">Update Password</button>
       </form>
     </p>
 
@@ -38,8 +46,8 @@
     </p>
     <p><h3>Scheduling:</h3><hr></p>
     <p>
-        <form class="mb-5" method="get" action="/trainer">
-      <button class="btn btn-info w-15 my-2 py-2" type="submit" name="update_btn" formaction="/trainer">Schedule Consultation</button>
+        <form class="mb-5" method="get" action="/schedule">
+      <button class="btn btn-info w-15 my-2 py-2" type="submit">Schedule Consultation</button>
         </form>
     </p>
 
