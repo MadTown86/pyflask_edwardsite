@@ -3,89 +3,107 @@
 <script>
     document.getElementById('member_nav').classList.add('active')
     document.getElementById('member_nav').classList.add('text-light')
-</script>
+    function nextClick() {
+      const nowDate = new Date()
+      const dateFromH2 = document.getElementById('date').innerText
+      const newDate = new Date(dateFromH2)
+      const oneDayMilliseconds = 86400000
+      const timeDifference = Math.abs(nowDate - newDate)
+      if (timeDifference > 10 * oneDayMilliseconds) {
 
-<body>
+      } else {
+        document.getElementById('next-date-button').disabled = false
+        newDate.setDate(newDate.getDate()+1)
+        const dateFormatted = new Intl.DateTimeFormat('en-US').format(newDate)
+        document.getElementById('date').innerText = dateFormatted
+        document.getElementById('hidden_date').value = dateFormatted
+      }
+      const hiddenDate = document.getElementById('hidden_date').value
+      console.log('Hidden Date:', hiddenDate)
+    }
+
+    function prevClick() {
+      const orgDate = '{{date}}'
+      const orgJavaDate = new Date(orgDate)
+      const dateFromH2 = document.getElementById('date').innerText
+      const newDate2 = new Date(dateFromH2)
+      newDate2.setDate(newDate2.getDate()-1)
+      const timeDifference2 = newDate2 - orgJavaDate
+      console.log('Time Difference PrevClick:', timeDifference2)
+      if (timeDifference2 < 0) {
+      } else {
+        document.getElementById('prev-date-button').disabled = false
+        const dateFormatted = new Intl.DateTimeFormat('en-US').format(newDate2)
+        document.getElementById('date').innerText = dateFormatted
+        document.getElementById('hidden_date').value = dateFormatted
+      }
+      const hiddenDate = document.getElementById('hidden_date').value
+      console.log('Hidden Date:', hiddenDate)
+    }  
+</script>
     <main>
-        <div class="d-flex flex-column flex-md-row p-4 gap-4 py-md-5 align-items-center justify-content-center">
-            <div class="dropdown-menu d-block position-static p-2 mx-0 shadow rounded-3 w-340px" data-bs-theme="light">
-              <div class="d-grid gap-1">
-                <div class="cal">
-                  <div class="cal-month">
-                    <button class="btn cal-btn" type="button">
-                      <svg class="bi" width="16" height="16"><use xlink:href="#arrow-left-short"></use></svg>
-                    </button>
-                    <strong class="cal-month-name">June</strong>
-                    <select class="form-select cal-month-name d-none">
-                      <option value="January">January</option>
-                      <option value="February">February</option>
-                      <option value="March">March</option>
-                      <option value="April">April</option>
-                      <option value="May">May</option>
-                      <option selected="" value="June">June</option>
-                      <option value="July">July</option>
-                      <option value="August">August</option>
-                      <option value="September">September</option>
-                      <option value="October">October</option>
-                      <option value="November">November</option>
-                      <option value="December">December</option>
-                    </select>
-                    <button class="btn cal-btn" type="button">
-                      <svg class="bi" width="16" height="16"><use xlink:href="#arrow-right-short"></use></svg>
-                    </button>
-                  </div>
-                  <div class="cal-weekdays text-body-secondary">
-                    <div class="cal-weekday">Sun</div>
-                    <div class="cal-weekday">Mon</div>
-                    <div class="cal-weekday">Tue</div>
-                    <div class="cal-weekday">Wed</div>
-                    <div class="cal-weekday">Thu</div>
-                    <div class="cal-weekday">Fri</div>
-                    <div class="cal-weekday">Sat</div>
-                  </div>
-                  <div class="cal-days">
-                    <button class="btn cal-btn" disabled="" type="button">30</button>
-                    <button class="btn cal-btn" disabled="" type="button">31</button>
-          
-                    <button class="btn cal-btn" type="button">1</button>
-                    <button class="btn cal-btn" type="button">2</button>
-                    <button class="btn cal-btn" type="button">3</button>
-                    <button class="btn cal-btn" type="button">4</button>
-                    <button class="btn cal-btn" type="button">5</button>
-                    <button class="btn cal-btn" type="button">6</button>
-                    <button class="btn cal-btn" type="button">7</button>
-          
-                    <button class="btn cal-btn" type="button">8</button>
-                    <button class="btn cal-btn" type="button">9</button>
-                    <button class="btn cal-btn" type="button">10</button>
-                    <button class="btn cal-btn" type="button">11</button>
-                    <button class="btn cal-btn" type="button">12</button>
-                    <button class="btn cal-btn" type="button">13</button>
-                    <button class="btn cal-btn" type="button">14</button>
-          
-                    <button class="btn cal-btn" type="button">15</button>
-                    <button class="btn cal-btn" type="button">16</button>
-                    <button class="btn cal-btn" type="button">17</button>
-                    <button class="btn cal-btn" type="button">18</button>
-                    <button class="btn cal-btn" type="button">19</button>
-                    <button class="btn cal-btn" type="button">20</button>
-                    <button class="btn cal-btn" type="button">21</button>
-          
-                    <button class="btn cal-btn" type="button">22</button>
-                    <button class="btn cal-btn" type="button">23</button>
-                    <button class="btn cal-btn" type="button">24</button>
-                    <button class="btn cal-btn" type="button">25</button>
-                    <button class="btn cal-btn" type="button">26</button>
-                    <button class="btn cal-btn" type="button">27</button>
-                    <button class="btn cal-btn" type="button">28</button>
-          
-                    <button class="btn cal-btn" type="button">29</button>
-                    <button class="btn cal-btn" type="button">30</button>
-                    <button class="btn cal-btn" type="button">31</button>
-                  </div>
-                </div>
-              </div>
+    {% if timeslots and date %}
+      <h1 class="text-center">Schedule</h1>
+        <div class="d-flex justify-content-center schedule">
+        <button id="prev-date-button" onclick="prevClick()"><span>&#8592</span></button>
+        <h2 class="text-center" id="date">{{date}}</h2>
+        <button id="next-date-button" onclick="nextClick()"><span>&#8594</span></button>
+        </div>
+
+      
+      <form action="/schedule" method="POST">
+        <input type="hidden" name="hidden_date" id="hidden_date" value="{{date}}">
+        <div class="d-flex flex-column flex-md-row p-4 gap-4 py-md-5 align-items-center justify-content-center"></div>
+          <div class="list-group list-group-radio d-grid gap-2 border-0">
+        {% for timeslot in timeslots %}
+            <div class="position-relative">
+              <input class="form-check-input position-absolute top-50 end-0 me-3 fs-5" type="radio" name="listGroupRadioGrid" id="listGroupRadioGrid{{timeslot}}" value="{{timeslot}}" checked="">
+              <label class="list-group-item py-3 pe-5" for="listGroupRadioGrid1">
+                <strong class="fw-semibold">First radio</strong>
+                <span class="d-block small opacity-75">With support text underneath to add more detail</span>
+              </label>
             </div>
-    </main>
-</body>
+        {% endfor %}
+          </div>
+        </div>
+        <button class="btn btn-primary rounded-pill px-3" type="submit" value="confirm" name="confirm">Confirm</button>
+      </form>
+    {% endif %}
+    
+<div class="d-flex flex-column flex-md-row p-4 gap-4 py-md-5 align-items-center justify-content-center">
+  <div class="list-group list-group-radio d-grid gap-2 border-0">
+    <div class="position-relative">
+      <input class="form-check-input position-absolute top-50 end-0 me-3 fs-5" type="radio" name="listGroupRadioGrid" id="listGroupRadioGrid1" value="" checked="">
+      <label class="list-group-item py-3 pe-5" for="listGroupRadioGrid1">
+        <strong class="fw-semibold">First radio</strong>
+        <span class="d-block small opacity-75">With support text underneath to add more detail</span>
+      </label>
+    </div>
+
+    <div class="position-relative">
+      <input class="form-check-input position-absolute top-50 end-0 me-3 fs-5" type="radio" name="listGroupRadioGrid" id="listGroupRadioGrid2" value="">
+      <label class="list-group-item py-3 pe-5" for="listGroupRadioGrid2">
+        <strong class="fw-semibold">Second radio</strong>
+        <span class="d-block small opacity-75">Some other text goes here</span>
+      </label>
+    </div>
+
+    <div class="position-relative">
+      <input class="form-check-input position-absolute top-50 end-0 me-3 fs-5" type="radio" name="listGroupRadioGrid" id="listGroupRadioGrid3" value="">
+      <label class="list-group-item py-3 pe-5" for="listGroupRadioGrid3">
+        <strong class="fw-semibold">Third radio</strong>
+        <span class="d-block small opacity-75">And we end with another snippet of text</span>
+      </label>
+    </div>
+
+    <div class="position-relative">
+      <input class="form-check-input position-absolute top-50 end-0 me-3 fs-5" type="radio" name="listGroupRadioGrid" id="listGroupRadioGrid4" value="" disabled="">
+      <label class="list-group-item py-3 pe-5" for="listGroupRadioGrid4">
+        <strong class="fw-semibold">Fourth disabled radio</strong>
+        <span class="d-block small opacity-75">This option is disabled</span>
+      </label>
+    </div>
+  </div>
+</div>
+</main>
 {% endblock content %}

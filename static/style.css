@@ -179,6 +179,27 @@ textarea {
 /* Fonts End */
 
 
+/* Scheduling CSS */
+.schedule {
+    display: grid;
+    align-items:center;
+    grid-template-columns: 1fr;
+    grid-gap: 10px;
+    padding: 10px;
+    margin-left: 25%;
+    margin-right: 25%; 
+}
+
+.datebar {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-gap: 10px;
+    padding: 30px;
+    margin-left: 25%;
+    margin-right: 25%; 
+}
+
+
 .maintrain {
     background-image: url("/static/assets/images/raw/training_images_opt.jpg")
 }

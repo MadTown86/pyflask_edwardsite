@@ -16,8 +16,9 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import time as tt
 from authlib.integrations.flask_client import OAuth
 from flask_mail import Mail, Message
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from logging.handlers import SMTPHandler
+
 
 # Load Environment Variables
 load_dotenv("vars\\.env")
@@ -61,6 +62,8 @@ oauth.register(
     client_kwargs={'scope': 'openid email profile'}
 )
 
+now = datetime.now
+
 # MySQL User Class
 class User(db.Model):
     __tablename__ = 'users'
@@ -86,19 +89,16 @@ class ResetRequest(db.Model):
     reset_token = db.Column(db.String(255), nullable=False)
     # created_at = db.Column(db.DateTime, default=tt.strftime("%Y-%m-%d %H:%M:%S"))
     # expires_at = db.Column(db.DateTime, default=tt.strftime("%Y-%m-%d %H:%M:%S"))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"))
-    expires_at = db.Column(db.DateTime, default=(datetime.utcnow() + timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S"))
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"))
+    expires_at = db.Column(db.DateTime, default=(datetime.now(timezone.utc) + timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S"))
 
 # MySQL Schedule Class
-class Employee(db.Model):
-    __tablename__ = 'employees'
+class Trainers(db.Model):
+    __tablename__ = 'trainers'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
-    department = db.Column(db.String(255), nullable=False)
     email = db.Column(db.String(255), nullable=False)
     phone = db.Column(db.String(255), nullable=False)
-    hire_date = db.Column(db.DateTime, nullable=False)
-    salary = db.Column(db.Float, nullable=False)
 
 # MySQL Services Class
 class Services(db.Model):
@@ -112,12 +112,19 @@ class Services(db.Model):
 class Appointments(db.Model):
     __tablename__ = 'appointments'
     id = db.Column(db.Integer, primary_key=True)
-    employee_id = db.Column(db.Integer, db.ForeignKey('employees.id'), nullable=False)
+    trainer_id = db.Column(db.Integer, db.ForeignKey('trainers.id'), nullable=False)
     service_id = db.Column(db.Integer, db.ForeignKey('services.id'), nullable=False)
     customer_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     appointment_date = db.Column(db.DateTime, nullable=False)
     appointment_time = db.Column(db.Time, nullable=False)
 
+with app.app_context():
+    db.create_all()
+    service = Services(name='Consultation', description='Consultation with a trainer', price=0.00)
+    db.session.add(service)
+    trainer = Trainers(name='Edward', email='unicornslayerbih@gmail.com', phone='2242874378')
+    db.session.add(trainer)
+    db.session.commit()
 
 # Logging
 handler = RotatingFileHandler(os.getenv("FILE_HANDLER_LOCATION"), maxBytes=10000, backupCount=1)
@@ -157,6 +164,64 @@ def train_page():
     user = session.get('user')
     return render_template("/pages/train.jinja", year=year, user=user)
 
+# Route to Display Privacy Policy
+@app.route("/privacy_policy")
+def privacy_policy_page():
+    return render_template("/pages/privacy_policy.jinja", year=year)
+
+# Route to Render Food Page
+@app.route("/food")
+def food_page():
+    user = session.get('user')
+    return render_template("/pages/food.jinja", year=year, user=user)
+
+# Route for User Contact
+@app.route("/contact", methods=['GET', 'POST'])
+def contact_page():
+    user = session.get('user')
+    if request.method == 'GET':
+        return render_template("/pages/contact.jinja", year=year, user=user)
+    if request.method == 'POST':
+        name = request.form['name']
+        email = request.form['email']
+        message = request.form['message']
+        msg_tovisions = Message(
+            subject='User Message - Visions.fit',
+            recipients=['grover.donlon@gmail.com'],
+            html=f'<html><p>Dear Visions Member!</p>{name} with email {email} has sent you the following message:</p><p>{message}</p></html>'
+        )
+        msg_tosender = Message(
+            subject='Contact Request Message - Visions.Fit',
+            html=f'<html><p>Thank you {name} for contacting Visions.Fit, Please be patient as it can take up to 48 hours for a response.</p></html>',
+            recipients=[f'{email}']
+        )
+        try:
+            with mail.connect() as conn:
+                conn.send(msg_tovisions)
+                conn.send(msg_tosender)
+            flash('Email Sent Successfully - Please Wait 24 Hours For Your Response', 'success')
+            return redirect(url_for('contact_page'))
+        except Exception as e:
+            print(e)
+            flash('Internal Error - Please Try Again Later', 'danger')
+            return redirect(url_for('contact_page'))
+        
+# Route To Member Page
+@app.route("/member", methods=['GET', 'POST'])
+def member_page():
+    user = session.get('user')
+    if request.method == 'GET':
+        user = session.get('user')
+        if user:
+            return render_template("/pages/member.jinja", year=year, user=user)
+        else:
+            return redirect(url_for('login_page'))
+    elif request.method == 'POST':
+        #TODO Write code for post method on member page, perhaps allow password change right there.
+        return redirect(url_for('member_page'))
+#endregion Basic Routes
+
+#region Route User Registration/Login/Reset/Delete
 # Route To Reset Request Page
 @app.route("/reset_request", methods=['GET', 'POST'])
 def reset_request_page():
@@ -222,13 +287,14 @@ def email_reset_page(reset_code):
                 return redirect(url_for('reset_request_page'))
             else:
                 user = User.query.filter_by(id=user_reference.user_id).first()
-                session['user'] = user.email, user.id
+                session['user'] = {'email':user.email, 'id':user.id}
                 return render_template("/pages/reset.jinja", year=year, user=user)
         except Exception as e:
             print(e)
             flash('Reset Request Not Found', 'danger')
             return redirect(url_for('reset_request_page'))
-                              
+
+# Route To Reset Page                     
 @app.route("/reset", methods=['GET', 'POST'])
 def reset_page():
     user = session.get('user')
@@ -249,7 +315,7 @@ def reset_page():
                 try:
                     user = User.query.filter_by(id=user['id']).first()
                 except Exception as e:
-                    print("Exception Querying User:", e.orig, e.params)
+                    print("Exception Querying User:", e)
                     flash('User Not Found', 'danger')
                     return redirect(url_for('login_page'))
                 try:
@@ -265,40 +331,7 @@ def reset_page():
                     flash('Password Reset Failed - Contact Site Administrator', 'danger')
                     return redirect(url_for('reset_page'))
         
-
-
-@app.route("/contact", methods=['GET', 'POST'])
-def contact_page():
-    user = session.get('user')
-    if request.method == 'GET':
-        return render_template("/pages/contact.jinja", year=year, user=user)
-    if request.method == 'POST':
-        name = request.form['name']
-        email = request.form['email']
-        message = request.form['message']
-        msg_tovisions = Message(
-            subject='User Message - Visions.fit',
-            recipients=['grover.donlon@gmail.com'],
-            html=f'<html><p>Dear Visions Member!</p>{name} with email {email} has sent you the following message:</p><p>{message}</p></html>'
-        )
-        msg_tosender = Message(
-            subject='Contact Request Message - Visions.Fit',
-            html=f'<html><p>Thank you {name} for contacting Visions.Fit, Please be patient as it can take up to 48 hours for a response.</p></html>',
-            recipients=[f'{email}']
-        )
-        try:
-            with mail.connect() as conn:
-                conn.send(msg_tovisions)
-                conn.send(msg_tosender)
-            flash('Email Sent Successfully - Please Wait 24 Hours For Your Response', 'success')
-            return redirect(url_for('contact_page'))
-        except Exception as e:
-            print(e)
-            flash('Internal Error - Please Try Again Later', 'danger')
-            return redirect(url_for('contact_page'))
-
-
-
+# Route to Rigister Page
 @app.route("/register", methods=['GET', 'POST'])
 def register_page():
     if request.method == 'POST':
@@ -321,12 +354,7 @@ def register_page():
     else:
         return render_template('/pages/register.jinja', year=year)
 
-
-@app.route("/privacy_policy")
-def privacy_policy_page():
-    return render_template("/pages/privacy_policy.jinja", year=year)
-
-
+# Route To Login Page
 @app.route("/login", methods=['GET', 'POST'])
 def login_page():
     if request.method == 'POST':
@@ -353,7 +381,7 @@ def login_page():
                     user_types.append(user.user_type)
                     continue
             print("Failed Here")
-            flash(f'No Login Information Found: Try The Following OAUTH Connections if listed: {user_types}', 'danger')
+            flash(f'Incorrect Login Credentials', 'danger')
             return redirect(url_for('login_page'))
     if request.method == 'GET':
         user = session.get('user')
@@ -361,35 +389,8 @@ def login_page():
             return render_template('/pages/member.jinja', year=year, user=user)
         else:
             return render_template('/pages/login.jinja', year=year, user=user)
-
-
-@app.route("/food")
-def food_page():
-    user = session.get('user')
-    return render_template("/pages/food.jinja", year=year, user=user)
-#endregion
-
-@app.route("/member", methods=['GET', 'POST'])
-def member_page():
-    user = session.get('user')
-    if request.method == 'GET':
-        user = session.get('user')
-        if user:
-            return render_template("/pages/member.jinja", year=year, user=user)
-        else:
-            return redirect(url_for('login_page'))
-    elif request.method == 'POST':
-        #TODO Write code for post method on member page, perhaps allow password change right there.
-        return redirect(url_for('member_page'))
-    
-@app.route("/schedule", methods=['GET', 'POST'])
-def schedule_page():
-    user = session.get('user')
-    if request.method == 'GET':
-        return render_template("/pages/schedule.jinja", year=year, user=user)
-    elif request.method == 'POST':
-        return redirect(url_for('schedule_page'))
-    
+        
+# Route To Delete Page
 @app.route("/delete", methods=['GET', 'POST'])
 def delete_page():
     user = session.get('user')
@@ -420,14 +421,37 @@ def delete_page():
         else:
             flash('User Not Found', 'danger')
             return redirect(url_for('login_page'))
-        
+#endregion
 
+# Route To Schedule Page
+@app.route("/schedule", methods=['GET', 'POST'])
+def schedule_page():
+    date = datetime.now().strftime("%m/%d/%Y")
+    print(date)
+    timeslots = ['9:00:00', '10:00:00', '11:00:00', '12:00:00', '13:00:00', '14:00:00', '15:00:00', '16:00:00', '17:00:00']
+    user = session.get('user')
+    schedule = [{'apt_id':1, 'apt_date':'2024-09-10', 'apt_time':'10:00:00', 'apt_trainer':'Edward', 'apt_service':'Consultation'}, \
+                {'apt_id':2, 'apt_date':'2024-09-10', 'apt_time':'11:00:00', 'apt_trainer':'Edward', 'apt_service':'Consultation'}, \
+                    {'apt_id':3, 'apt_date':'2024-09-10', 'apt_time':'12:00:00', 'apt_trainer':'Edward', 'apt_service':'Consultation'}, \
+                        {'apt_id':4, 'apt_date':'2024-09-10', 'apt_time':'13:00:00', 'apt_trainer':'Edward', 'apt_service':'Consultation'}, \
+                            {'apt_id':5, 'apt_date':'2024-09-10', 'apt_time':'14:00:00', 'apt_trainer':'Edward', 'apt_service':'Consultation'}]
+    if request.method == 'GET':
+        return render_template("/pages/schedule.jinja", year=year, user=user, timeslots=timeslots, date=date)
+    elif request.method == 'POST':
+        data = request.get_data()
+        time = request.form.get('time')
+        date = request.form.get('date')
+        print(data, date, time)
+        return redirect(url_for('schedule_page'))
+    
+        
 #region Google Auth Routes
 @app.route("/auth/google")
 def auth_google():
     redirect_uri = url_for('auth_google_callback', _external=True)
     return oauth.google.authorize_redirect(redirect_uri)
 
+# Google Auth Callback Route
 @app.route("/auth/google/callback")
 def auth_google_callback():
     token = oauth.google.authorize_access_token()
@@ -450,6 +474,13 @@ def auth_google_callback():
 def logout():
     session.pop('user', None)
     return redirect(url_for('index_page'))
+
+#region Testing Routes
+@app.route("/test")
+def test_page():
+    return render_template("/pages/test.html")
+
+#endregion Testing Routes
 
 # Run App
 if __name__ == "__main__":
