@@ -97,14 +97,14 @@ class Trainers(db.Model):
     __tablename__ = 'trainers'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
-    email = db.Column(db.String(255), nullable=False)
+    email = db.Column(db.String(255), unique=True, nullable=False)
     phone = db.Column(db.String(255), nullable=False)
 
 # MySQL Services Class
 class Services(db.Model):
     __tablename__ = 'services'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(255), nullable=False)
+    name = db.Column(db.String(255), unique=True, nullable=False)
     description = db.Column(db.Text, nullable=False)
     price = db.Column(db.Float, nullable=False)
 
@@ -117,6 +117,7 @@ class Appointments(db.Model):
     customer_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     appointment_date = db.Column(db.DateTime, nullable=False)
     appointment_time = db.Column(db.Time, nullable=False)
+    confirmed = db.Column(db.Boolean, default=False)
 
 with app.app_context():
     db.create_all()
@@ -124,7 +125,11 @@ with app.app_context():
     db.session.add(service)
     trainer = Trainers(name='Edward', email='unicornslayerbih@gmail.com', phone='2242874378')
     db.session.add(trainer)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(e)
 
 # Logging
 handler = RotatingFileHandler(os.getenv("FILE_HANDLER_LOCATION"), maxBytes=10000, backupCount=1)
@@ -428,7 +433,15 @@ def delete_page():
 def schedule_page():
     date = datetime.now().strftime("%m/%d/%Y")
     print(date)
-    timeslots = ['9:00:00', '10:00:00', '11:00:00', '12:00:00', '13:00:00', '14:00:00', '15:00:00', '16:00:00', '17:00:00']
+    datefmtinput = '%m/%d/%Y %H:%M:%S'
+    datefmtoutput = '%I:%M %p'
+    datefmtreq = '%m/%d/%Y %I:%M %p'
+    print(date)
+    timeslots = ['09:00:00', '10:00:00', '11:00:00', '12:00:00', '13:00:00', '14:00:00', '15:00:00', '16:00:00', '17:00:00']
+    for i in range(len(timeslots)):
+        timeslots[i] = datetime.strptime(date + ' ' + timeslots[i], datefmtinput).strftime(datefmtoutput)
+        print(timeslots[i])
+    print(timeslots)
     user = session.get('user')
     schedule = [{'apt_id':1, 'apt_date':'2024-09-10', 'apt_time':'10:00:00', 'apt_trainer':'Edward', 'apt_service':'Consultation'}, \
                 {'apt_id':2, 'apt_date':'2024-09-10', 'apt_time':'11:00:00', 'apt_trainer':'Edward', 'apt_service':'Consultation'}, \
@@ -439,10 +452,21 @@ def schedule_page():
         return render_template("/pages/schedule.jinja", year=year, user=user, timeslots=timeslots, date=date)
     elif request.method == 'POST':
         data = request.get_data()
-        time = request.form.get('time')
-        date = request.form.get('date')
-        print(data, date, time)
-        return redirect(url_for('schedule_page'))
+        time = request.form.get('listGroupRadioGrid')
+        date = request.form.get('hidden_date')
+        print("Date:", date, "Time:", time)
+        appt_request = datetime.strptime(date + ' ' + time, datefmtreq)
+        try:
+            appt = Appointments(trainer_id=1, service_id=1, customer_id=user['id'], appointment_date=appt_request, appointment_time=appt_request.time())
+            db.session.add(appt)
+            db.session.commit()
+            flash('Appointment Scheduled Successfully', 'success')
+            return redirect(url_for('schedule_page'))
+        except Exception as e:
+            print(e)
+            db.session.rollback()
+            flash('Error Scheduling Appointment', 'danger')
+            return redirect(url_for('schedule_page'))
     
         
 #region Google Auth Routes

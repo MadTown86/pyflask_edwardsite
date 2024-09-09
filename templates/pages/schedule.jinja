@@ -53,57 +53,29 @@
       
       <form action="/schedule" method="POST">
         <input type="hidden" name="hidden_date" id="hidden_date" value="{{date}}">
-        <div class="d-flex flex-column flex-md-row p-4 gap-4 py-md-5 align-items-center justify-content-center"></div>
-          <div class="list-group list-group-radio d-grid gap-2 border-0">
+          <div class="d-flex flex-column flex-md-row p-4 gap-4 py-md-5 align-items-center justify-content-center">
+            <div class="list-group list-group-radio d-grid gap-2 border-0">
         {% for timeslot in timeslots %}
-            <div class="position-relative">
-              <input class="form-check-input position-absolute top-50 end-0 me-3 fs-5" type="radio" name="listGroupRadioGrid" id="listGroupRadioGrid{{timeslot}}" value="{{timeslot}}" checked="">
-              <label class="list-group-item py-3 pe-5" for="listGroupRadioGrid1">
-                <strong class="fw-semibold">First radio</strong>
-                <span class="d-block small opacity-75">With support text underneath to add more detail</span>
-              </label>
-            </div>
+              {% if loop.index == 1 %}
+                <div class="position-relative">
+                <input class="form-check-input position-absolute top-50 end-0  me-3 fs-5" type="radio" name="listGroupRadioGrid" id="listGroupRadioGrid_{{timeslot}}" value="{{timeslot}}" checked="">
+                <label class="list-group-item rounded-3 py-3 pe-5" for="listGroupRadioGrid_{{timeslot}}">
+                  <strong class="fw-semibold">{{ timeslot }}</strong>
+                </label>
+              </div>
+              {% else %}
+              <div class="position-relative">
+                <input class="form-check-input position-absolute top-50 end-0 me-3 fs-5" type="radio" name="listGroupRadioGrid" id="listGroupRadioGrid_{{timeslot}}" value="{{timeslot}}">
+                <label class="list-group-item rounded-3 py-3 pe-5" for="listGroupRadioGrid_{{timeslot}}">
+                  <strong class="fw-semibold">{{ timeslot }}</strong>
+                </label>
+              </div>
+              {% endif %}
         {% endfor %}
+          <button class="btn btn-primary rounded-pill px-3" type="submit" value="confirm" name="confirm">Confirm</button>
           </div>
         </div>
-        <button class="btn btn-primary rounded-pill px-3" type="submit" value="confirm" name="confirm">Confirm</button>
       </form>
     {% endif %}
-    
-<div class="d-flex flex-column flex-md-row p-4 gap-4 py-md-5 align-items-center justify-content-center">
-  <div class="list-group list-group-radio d-grid gap-2 border-0">
-    <div class="position-relative">
-      <input class="form-check-input position-absolute top-50 end-0 me-3 fs-5" type="radio" name="listGroupRadioGrid" id="listGroupRadioGrid1" value="" checked="">
-      <label class="list-group-item py-3 pe-5" for="listGroupRadioGrid1">
-        <strong class="fw-semibold">First radio</strong>
-        <span class="d-block small opacity-75">With support text underneath to add more detail</span>
-      </label>
-    </div>
-
-    <div class="position-relative">
-      <input class="form-check-input position-absolute top-50 end-0 me-3 fs-5" type="radio" name="listGroupRadioGrid" id="listGroupRadioGrid2" value="">
-      <label class="list-group-item py-3 pe-5" for="listGroupRadioGrid2">
-        <strong class="fw-semibold">Second radio</strong>
-        <span class="d-block small opacity-75">Some other text goes here</span>
-      </label>
-    </div>
-
-    <div class="position-relative">
-      <input class="form-check-input position-absolute top-50 end-0 me-3 fs-5" type="radio" name="listGroupRadioGrid" id="listGroupRadioGrid3" value="">
-      <label class="list-group-item py-3 pe-5" for="listGroupRadioGrid3">
-        <strong class="fw-semibold">Third radio</strong>
-        <span class="d-block small opacity-75">And we end with another snippet of text</span>
-      </label>
-    </div>
-
-    <div class="position-relative">
-      <input class="form-check-input position-absolute top-50 end-0 me-3 fs-5" type="radio" name="listGroupRadioGrid" id="listGroupRadioGrid4" value="" disabled="">
-      <label class="list-group-item py-3 pe-5" for="listGroupRadioGrid4">
-        <strong class="fw-semibold">Fourth disabled radio</strong>
-        <span class="d-block small opacity-75">This option is disabled</span>
-      </label>
-    </div>
-  </div>
-</div>
 </main>
 {% endblock content %}
