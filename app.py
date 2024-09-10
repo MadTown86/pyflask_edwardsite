@@ -310,7 +310,7 @@ def reset_page():
     else:
         print("User Found")
         if request.method == 'GET':
-            print(user)
+            user_match = User.query.filter_by(id=user['id']).first()
             return render_template("/pages/reset.jinja", year=year, user=user)
         elif request.method == 'POST':
             if not user:
@@ -479,18 +479,26 @@ def auth_google():
 @app.route("/auth/google/callback")
 def auth_google_callback():
     token = oauth.google.authorize_access_token()
-    session['user'] = token['userinfo']
-    email = session['user'].email
-    user_fN = session['user'].given_name
-    user_lN = session['user'].family_name
-    user = User.query.filter_by(email=email).first()
-    if not user:
+    user_info_google = token['userinfo']
+    email = user_info_google['email']
+    google_users = User.query.filter_by(email=email).all()
+    if not google_users:
+        user_fN = user_info_google['given_name']
+        user_lN = user_info_google['family_name']
         user = User(email=email, fN=user_fN, lN=user_lN, password='google', user_type='google')
         db.session.add(user)
         db.session.commit()
+        session['user'] = {"email":email, "id":user.id, "user_type":user.user_type}
+        flash('User Registered Successfully', 'success')
         return redirect(url_for('member_page'))
     else:
-        return redirect(url_for('member_page'))
+        users = User.query.filter_by(email=email).all()
+        for user in users:
+            if user.user_type == 'google':
+                session['user'] = {"email":user.email, "id":user.id, "user_type":user.user_type}
+                return redirect(url_for('member_page'))
+            else:
+
 #endregion
 
 # Logout Route
