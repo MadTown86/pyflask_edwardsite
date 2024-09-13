@@ -119,17 +119,17 @@ class Appointments(db.Model):
     appointment_time = db.Column(db.Time, nullable=False)
     confirmed = db.Column(db.Boolean, default=False)
 
-with app.app_context():
-    db.create_all()
-    service = Services(name='Consultation', description='Consultation with a trainer', price=0.00)
-    db.session.add(service)
-    trainer = Trainers(name='Edward', email='unicornslayerbih@gmail.com', phone='2242874378')
-    db.session.add(trainer)
-    try:
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        print(e)
+# with app.app_context():
+#     db.create_all()
+#     service = Services(name='Consultation', description='Consultation with a trainer', price=0.00)
+#     db.session.add(service)
+#     trainer = Trainers(name='Edward', email='unicornslayerbih@gmail.com', phone='2242874378')
+#     db.session.add(trainer)
+#     try:
+#         db.session.commit()
+#     except Exception as e:
+#         db.session.rollback()
+#         print(e)
 
 # Logging
 handler = RotatingFileHandler(os.getenv("FILE_HANDLER_LOCATION"), maxBytes=10000, backupCount=1)
@@ -217,8 +217,9 @@ def member_page():
     user = session.get('user')
     if request.method == 'GET':
         user = session.get('user')
+        appointments = Appointments.query.filter_by(customer_id=user['id']).all()
         if user:
-            return render_template("/pages/member.jinja", year=year, user=user)
+            return render_template("/pages/member.jinja", year=year, user=user, appointments=appointments)
         else:
             return redirect(url_for('login_page'))
     elif request.method == 'POST':
@@ -311,6 +312,9 @@ def reset_page():
         print("User Found")
         if request.method == 'GET':
             user_match = User.query.filter_by(id=user['id']).first()
+            if user_match.user_type != 'native':
+                flash('Non Native Users Cannot Reset Password - Please Try Google/Twitter/Facebook Logins', 'danger')
+                return redirect(url_for('login_page'))
             return render_template("/pages/reset.jinja", year=year, user=user)
         elif request.method == 'POST':
             if not user:
@@ -481,7 +485,8 @@ def auth_google_callback():
     token = oauth.google.authorize_access_token()
     user_info_google = token['userinfo']
     email = user_info_google['email']
-    google_users = User.query.filter_by(email=email).all()
+    google_users = User.query.filter_by(email=email, user_type='google').first()
+    print(google_users)
     if not google_users:
         user_fN = user_info_google['given_name']
         user_lN = user_info_google['family_name']
@@ -492,12 +497,10 @@ def auth_google_callback():
         flash('User Registered Successfully', 'success')
         return redirect(url_for('member_page'))
     else:
-        users = User.query.filter_by(email=email).all()
-        for user in users:
-            if user.user_type == 'google':
-                session['user'] = {"email":user.email, "id":user.id, "user_type":user.user_type}
-                return redirect(url_for('member_page'))
-            else:
+        session['user'] = {'id':google_users.id, 'email':google_users.email, 'user_type':google_users.user_type}
+        user = session.get('user')
+        flash('User Logged In Successfully', 'success')
+        return redirect(url_for('member_page'))
 
 #endregion
 
