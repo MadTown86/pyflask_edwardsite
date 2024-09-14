@@ -18,6 +18,7 @@ from authlib.integrations.flask_client import OAuth
 from flask_mail import Mail, Message
 from datetime import datetime, timedelta, timezone
 from logging.handlers import SMTPHandler
+from collections import defaultdict
 
 
 # Load Environment Variables
@@ -118,10 +119,11 @@ class Appointments(db.Model):
     trainer_id = db.Column(db.Integer, db.ForeignKey('trainers.id'), nullable=False)
     service_id = db.Column(db.Integer, db.ForeignKey('services.id'), nullable=False)
     customer_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    appointment_date = db.Column(db.DateTime, nullable=False)
+    appointment_date = db.Column(db.Date, nullable=False)
     appointment_time = db.Column(db.Time, nullable=False)
     confirmed = db.Column(db.Boolean, default=False)
-
+    db.UniqueConstraint('trainer_id', 'appointment_date', 'appointment_time', name='unique_appointment')
+    
 # with app.app_context():
 #     db.create_all()
 #     service = Services(name='Consultation', description='Consultation with a trainer', price=0.00)
@@ -223,6 +225,7 @@ def member_page():
     if request.method == 'GET':
         user = session.get('user')
         appointments = Appointments.query.filter_by(customer_id=user['id']).all()
+        print(appointments[0].appointment_date, appointments[0].appointment_time, appointments[0].confirmed)
         if user:
             return render_template("/pages/member.jinja", year=year, user=user, appointments=appointments)
         else:
@@ -441,41 +444,44 @@ def delete_page():
 @app.route("/schedule", methods=['GET', 'POST'])
 def schedule_page():
     date = datetime.now().strftime("%m/%d/%Y")
-    print(date)
     datefmtinput = '%m/%d/%Y %H:%M:%S'
     datefmtoutput = '%I:%M %p'
     datefmtreq = '%m/%d/%Y %I:%M %p'
-    print(date)
+    justdate = '%m/%d/%Y'
     timeslots = ['09:00:00', '10:00:00', '11:00:00', '12:00:00', '13:00:00', '14:00:00', '15:00:00', '16:00:00', '17:00:00']
     for i in range(len(timeslots)):
         timeslots[i] = datetime.strptime(date + ' ' + timeslots[i], datefmtinput).strftime(datefmtoutput)
-        print(timeslots[i])
-    print(timeslots)
     user = session.get('user')
-    schedule = [{'apt_id':1, 'apt_date':'2024-09-10', 'apt_time':'10:00:00', 'apt_trainer':'Edward', 'apt_service':'Consultation'}, \
-                {'apt_id':2, 'apt_date':'2024-09-10', 'apt_time':'11:00:00', 'apt_trainer':'Edward', 'apt_service':'Consultation'}, \
-                    {'apt_id':3, 'apt_date':'2024-09-10', 'apt_time':'12:00:00', 'apt_trainer':'Edward', 'apt_service':'Consultation'}, \
-                        {'apt_id':4, 'apt_date':'2024-09-10', 'apt_time':'13:00:00', 'apt_trainer':'Edward', 'apt_service':'Consultation'}, \
-                            {'apt_id':5, 'apt_date':'2024-09-10', 'apt_time':'14:00:00', 'apt_trainer':'Edward', 'apt_service':'Consultation'}]
     if request.method == 'GET':
-        return render_template("/pages/schedule.jinja", year=year, user=user, timeslots=timeslots, date=date)
+        try:
+            appointments = Appointments.query.group_by(Appointments.appointment_date).all()
+            appts_by_date = defaultdict(list)
+            for appt in appointments:
+                appts_by_date[appt.appointment_date.strftime(justdate)].append(appt.appointment_time.strftime(datefmtoutput))
+            print(appts_by_date)
+            return render_template("/pages/schedule.jinja", year=year, user=user, timeslots=timeslots, date=date, appointments=appointments)
+        except Exception as e:
+            print(e)
+            flash('Error Fetching Appointments', 'danger')
+            return redirect(url_for('member_page'))
+        
     elif request.method == 'POST':
-        data = request.get_data()
-        time = request.form.get('listGroupRadioGrid')
-        date = request.form.get('hidden_date')
-        print("Date:", date, "Time:", time)
-        appt_request = datetime.strptime(date + ' ' + time, datefmtreq)
+        data = request.get_json()
+        date_post = data['date']
+        time = data['time']
+        appt_request = datetime.strptime(date_post + ' ' + time, datefmtreq)
+        print(appt_request)
         try:
             appt = Appointments(trainer_id=1, service_id=1, customer_id=user['id'], appointment_date=appt_request, appointment_time=appt_request.time())
             db.session.add(appt)
             db.session.commit()
-            flash('Appointment Scheduled Successfully', 'success')
+            flash('Appointment Request Sent', 'success')
             return redirect(url_for('schedule_page'))
         except Exception as e:
             print(e)
             db.session.rollback()
             flash('Error Scheduling Appointment', 'danger')
-            return redirect(url_for('schedule_page'))
+            return redirect(url_for('member_page'))
     
         
 #region Google Auth Routes

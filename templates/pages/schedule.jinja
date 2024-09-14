@@ -19,7 +19,7 @@
         document.getElementById('hidden_date').value = dateFormatted
       }
       const hiddenDate = document.getElementById('hidden_date').value
-      console.log('Hidden Date:', hiddenDate)
+      console.log(hiddenDate)
     }
 
     function prevClick() {
@@ -29,7 +29,6 @@
       const newDate2 = new Date(dateFromH2)
       newDate2.setDate(newDate2.getDate()-1)
       const timeDifference2 = newDate2 - orgJavaDate
-      console.log('Time Difference PrevClick:', timeDifference2)
       if (timeDifference2 < 0) {
       } else {
         document.getElementById('prev-date-button').disabled = false
@@ -38,10 +37,67 @@
         document.getElementById('hidden_date').value = dateFormatted
       }
       const hiddenDate = document.getElementById('hidden_date').value
-      console.log('Hidden Date:', hiddenDate)
+      console.log(hiddenDate)
     }  
+
+    function confirmClick() {
+      const userId = '{{ session.user.id }}';
+      const date = document.getElementById('hidden_date').value;
+      console.log('DATE IN CONFIRM CLICK:', date);
+      let time = '';
+      const radioButtons = document.getElementsByName('listGroupRadioGrid');
+      for (let i = 0; i < radioButtons.length; i++) {
+        if (radioButtons[i].checked) {
+          time = radioButtons[i].value;
+          break;
+        }
+      }
+      const data = {
+        userId: userId,
+        date: date,
+        time: time
+      };
+      fetch('/schedule', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log('Success:', data);
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+      });
+    }
+
+    function confirmBox() {
+      if (window.confirm('Are you sure you want to confirm this appointment?')) {
+        confirmClick();
+      } else {
+        console.log('Appointment not confirmed');
+      }
+      
+    }
 </script>
     <main>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for message, category in messages %}
+        {% if category == 'danger' %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% else %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        {% endif %}
+      {% endfor %}
+    {% else %}
     {% if timeslots and date %}
       <h1 class="text-center">Schedule</h1>
         <div class="d-flex justify-content-center schedule">
@@ -51,14 +107,17 @@
         </div>
 
       
-      <form action="/schedule" method="POST">
+      <form>
         <input type="hidden" name="hidden_date" id="hidden_date" value="{{date}}">
           <div class="d-flex flex-column flex-md-row p-4 gap-4 py-md-5 align-items-center justify-content-center">
             <div class="list-group list-group-radio d-grid gap-2 border-0">
         {% for timeslot in timeslots %}
               {% if loop.index == 1 %}
+              {% if appointments[{{date}}]%}
+              {% else %}
+              {% endif %}
                 <div class="position-relative">
-                <input class="form-check-input position-absolute top-50 end-0  me-3 fs-5" type="radio" name="listGroupRadioGrid" id="listGroupRadioGrid_{{timeslot}}" value="{{timeslot}}" checked="">
+                <input class="form-check-input position-absolute top-50 end-0 me-3 fs-5" type="radio" name="listGroupRadioGrid" id="listGroupRadioGrid_{{timeslot}}" value="{{timeslot}}" checked="">
                 <label class="list-group-item rounded-3 py-3 pe-5" for="listGroupRadioGrid_{{timeslot}}">
                   <strong class="fw-semibold">{{ timeslot }}</strong>
                 </label>
@@ -72,10 +131,12 @@
               </div>
               {% endif %}
         {% endfor %}
-          <button class="btn btn-primary rounded-pill px-3" type="submit" value="confirm" name="confirm">Confirm</button>
+          <button class="btn btn-primary rounded-pill px-3" type="confirm" onclick="confirmBox()">Confirm</button>
           </div>
         </div>
       </form>
     {% endif %}
+    {% endif %}
+    {% endwith %}
 </main>
 {% endblock content %}

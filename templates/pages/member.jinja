@@ -49,11 +49,16 @@
     <p><h3>Scheduling:</h3><hr></p>
     <p>
     {% if appointments %}
-    <div class="alert alert-info mt-3" role="alert"></div>
      {% for appointment in appointments %}
-      <p>
-      {{ appointment }}
+      {% if appointment.confirmed == false%}
+      <div class="alert alert-warning mt-3" role="alert">
+        Appointment scheduled for {{ appointment.appointment_date }} at {{ appointment.appointment_time }} is pending
+      </div>
+      {% else %}
+      <div class="alert alert-success mt-3" role="alert">
+        Appointment scheduled for {{ appointment.appointment_date }} at {{ appointment.appointment_time }} is confirmed
       </p>
+      {% endif %}
      {% endfor %}
      </div>
     {% else %}
