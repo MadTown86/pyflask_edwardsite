@@ -315,6 +315,17 @@ textarea {
         width: 25px !important;
     }
 
+    .secondaryfont-nav {
+      /* Index.html - sans-serif */
+      font-family: 'Open Sans', sans-serif;
+      font-size: 5.2vw;
+  }
+
+    .secondaryfont-navhead {
+      /* Index.html - sans-serif */
+      font-family: 'Caveat', cursive;
+      font-size: 7.2vw;
+  }
 }
 
 @media screen and (min-width: 577px) and (max-width: 992px) {
@@ -335,6 +346,18 @@ textarea {
     body {
         margin: 0%;
     }
+
+    .secondaryfont-nav {
+      /* Index.html - sans-serif */
+      font-family: 'Open Sans', sans-serif;
+      font-size: 2.2vw;
+  }
+
+    .secondaryfont-navhead {
+      /* Index.html - sans-serif */
+      font-family: 'Caveat', cursive;
+      font-size: 3.2vw;
+  }
 }
 
 @media screen and (min-width: 993px) {
@@ -344,4 +367,16 @@ textarea {
     .car_cap_1 {
         font-size: 74px;
     }
+
+    .secondaryfont-nav {
+      /* Index.html - sans-serif */
+      font-family: 'Open Sans', sans-serif;
+      font-size: 1.2vw;
+  }
+
+    .secondaryfont-navhead {
+      /* Index.html - sans-serif */
+      font-family: 'Caveat', cursive;
+      font-size: 2.2vw;
+  }
 }

@@ -62,8 +62,11 @@ oauth.register(
     client_kwargs={'scope': 'openid email profile'}
 )
 
+# Pre-defined Module Level Variables
 now = datetime.now
+year = tt.strftime("%Y")
 
+#region MySQL Classes
 # MySQL User Class
 class User(db.Model):
     __tablename__ = 'users'
@@ -131,6 +134,8 @@ class Appointments(db.Model):
 #         db.session.rollback()
 #         print(e)
 
+#endregion MySQL Classes
+
 # Logging
 handler = RotatingFileHandler(os.getenv("FILE_HANDLER_LOCATION"), maxBytes=10000, backupCount=1)
 handler.setLevel(logging.INFO)
@@ -148,7 +153,7 @@ if not app.debug:
     mail_handler.setLevel(logging.ERROR)
     app.logger.addHandler(mail_handler)
 
-year = tt.strftime("%Y")
+
 
 # Basic Routes
 #region Basic Routes
@@ -234,7 +239,7 @@ def reset_request_page():
     user = session.get('user')
     if user and user.type != 'google':
         return render_template("/pages/reset_request.jinja", year=year, user=user)
-    else:
+    elif not user:
         if request.method == 'GET':
             return render_template("/pages/reset_request.jinja", year=year, user=user)
         elif request.method == 'POST':
@@ -501,7 +506,6 @@ def auth_google_callback():
         user = session.get('user')
         flash('User Logged In Successfully', 'success')
         return redirect(url_for('member_page'))
-
 #endregion
 
 # Logout Route
@@ -513,7 +517,7 @@ def logout():
 #region Testing Routes
 @app.route("/test")
 def test_page():
-    return render_template("/pages/test.html")
+    return render_template("/pages/navbar_test.jinja")
 
 #endregion Testing Routes
 

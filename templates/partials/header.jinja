@@ -4,19 +4,32 @@
     <a href="/" class="d-flex align-items-center mb-1 mb-md-0 me-md-auto link-body-emphasis text-decoration-none">
         <span class="px-5 mainfont">Visions</span>
     </a>
-    <nav class="navbar navbar-expand-lg bg-body-tertiary">
-        <ul class="nav nav-pills align-items-center">
-        <li class="nav-item" id="home_nav"><a href="/" class="nav-link secondaryfont">Home</a></li>
-        <li class="nav-item" id="train_nav"><a href="/train" class="nav-link secondaryfont">Train</a></li>
-        <li class="nav-item" id="food_nav"><a href="/food" class="nav-link secondaryfont">Food</a></li>
-        <li class="nav-item" id="vision_nav"><a href="/vision" class="nav-link secondaryfont">Vision</a></li>
-        <li class="nav-item" id="contact_nav"><a href="/contact" class="nav-link secondaryfont">Contact</a></li>
-        {% if user %}
-        <li class="nav-item" id="member_nav"><a href="/member" class="nav-link secondaryfont">Member</a></li>
-        {%  else  %}
-        <li class="nav-item" id="login_nav"><a href="/login" id="login_navref" class="nav-link secondaryfont">Login</a></li>
-        {% endif %}
-    </ul>
+    <nav class="navbar bg-body-tertiery">
+        <div class="container-fluid">
+            <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
+                <div class="offcanvas-header gradient_background secondaryfont-navhead">
+                    <h5 class="offcanvas-title secondaryfont-navhead" id="offcanvasNavbarLabel">Visions</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                </div>
+                <div class="offcanvas-body gradient_background">
+                    <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
+                        <li class="nav-item secondaryfont-nav" id="home_nav"><a href="/" class="nav-link">Home</a></li>
+                        <li class="nav-item secondaryfont-nav" id="train_nav"><a href="/train" class="nav-link">Train</a></li>
+                        <li class="nav-item secondaryfont-nav" id="food_nav"><a href="/food" class="nav-link">Food</a></li>
+                        <li class="nav-item secondaryfont-nav" id="vision_nav"><a href="/vision" class="nav-link">Vision</a></li>
+                        <li class="nav-item secondaryfont-nav" id="contact_nav"><a href="/contact" class="nav-link">Contact</a></li>
+                        {% if user %}
+                        <li class="nav-item secondaryfont-nav" id="member_nav"><a href="/member" class="nav-link">Member</a></li>
+                        {%  else  %}
+                        <li class="nav-item secondaryfont-nav" id="login_nav"><a href="/login" id="login_navref" class="nav-link">Login</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
     </nav>
 </header>
 {%endblock header%}

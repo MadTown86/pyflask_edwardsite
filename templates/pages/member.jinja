@@ -49,11 +49,18 @@
     <p><h3>Scheduling:</h3><hr></p>
     <p>
     {% if appointments %}
+    <div class="alert alert-info mt-3" role="alert"></div>
      {% for appointment in appointments %}
-      <div class="alert alert-info mt-3" role="alert">
-        {{ appointment }}
-      </div>
+      <p>
+      {{ appointment }}
+      </p>
      {% endfor %}
+     </div>
+    {% else %}
+      <div class="alert alert-info mt-3" role="alert">
+        No appointments scheduled
+      </div>
+    {% endif %}
     </p>
     <p>
         <form class="mb-5" method="get" action="/schedule">

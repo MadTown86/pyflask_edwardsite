@@ -5881,3 +5881,7 @@ vars/googleauth.json
 .venv/Lib/site-packages/rsa/__pycache__/util.cpython-311.pyc
 .venv/Lib/site-packages/rsa-4.9.dist-info/REQUESTED
 .venv/Lib/site-packages/scripts/readme-gen/__pycache__/readme_gen.cpython-311.pyc
+templates/pages/navbar_test.jinja
+templates/partials/header_test.jinja
+templates/base_test.jinja
+templates/pages/navbar_test.jinja
