@@ -4,6 +4,7 @@
     document.getElementById('member_nav').classList.add('active')
     document.getElementById('member_nav').classList.add('text-light')
     function nextClick() {
+      //Date Portion
       const nowDate = new Date()
       const dateFromH2 = document.getElementById('date').innerText
       const newDate = new Date(dateFromH2)
@@ -20,6 +21,35 @@
       }
       const hiddenDate = document.getElementById('hidden_date').value
       console.log(hiddenDate)
+
+      //Time Portion
+      const timeslots = document.getElementsByName('listGroupRadioGrid')
+      const busyTimeSlotsDict = {{ json_appts }}
+      const orgDateKeys = []
+      const formattedDateKeys = []
+
+      for (const [key, value] of Object.entries(busyTimeSlotsDict)) {
+        orgDateKeys.push(key)
+      }
+
+      for (let i = 0; i < orgDateKeys.length; i++) {
+        const formattedDate = new Intl.DateTimeFormat('en-US').format(new Date(orgDateKeys[i]))
+        formattedDateKeys.push(formattedDate)
+      }
+
+      for (let i = 0; i < timeslots.length; i++) {
+        if (formattedDateKeys.includes(hiddenDate)) {
+          if (busyTimeSlotsDict[orgDateKeys[formattedDateKeys.indexOf(hiddenDate)]].includes(timeslots[i].value)) {
+            timeslots[i].disabled = true
+            timeslots[i].classList.add('bg-danger')
+          } else
+            timeslots[i].disabled = false
+            timeslots[i].classList.remove('bg-danger')
+        } else {
+          timeslots[i].disabled = false
+          timeslots[i].classList.remove('bg-danger')
+        }
+    }
     }
 
     function prevClick() {
@@ -38,6 +68,35 @@
       }
       const hiddenDate = document.getElementById('hidden_date').value
       console.log(hiddenDate)
+
+      //Time Portion
+      const timeslots = document.getElementsByName('listGroupRadioGrid')
+      const busyTimeSlotsDict = {{ json_appts }}
+      const orgDateKeys = []
+      const formattedDateKeys = []
+
+      for (const [key, value] of Object.entries(busyTimeSlotsDict)) {
+        orgDateKeys.push(key)
+      }
+
+      for (let i = 0; i < orgDateKeys.length; i++) {
+        const formattedDate = new Intl.DateTimeFormat('en-US').format(new Date(orgDateKeys[i]))
+        formattedDateKeys.push(formattedDate)
+      }
+
+      for (let i = 0; i < timeslots.length; i++) {
+        if (formattedDateKeys.includes(hiddenDate)) {
+          if (busyTimeSlotsDict[orgDateKeys[formattedDateKeys.indexOf(hiddenDate)]].includes(timeslots[i].value)) {
+            timeslots[i].disabled = true
+            timeslots[i].classList.add('bg-danger')
+          } else
+            timeslots[i].disabled = false
+            timeslots[i].classList.remove('bg-danger')
+        } else {
+          timeslots[i].disabled = false
+          timeslots[i].classList.remove('bg-danger')
+        }
+    }
     }  
 
     function confirmClick() {
@@ -81,18 +140,30 @@
       }
       
     }
+
+    function renderTimeslots(date, timeslots, busyTimeslots=[]) {
+      for (let i = 0; i < timeslots.length; i++) {
+        if (timeslots[i] in busyTimeslots) {
+          document.getElementById('listGroupRadioGrid_' + timeslots[i]).disabled = true;
+        }
+      }
+    }
+
+    const appointments = {{ json_appts | tojson }};
+    console.log(appointments);
+
 </script>
     <main>
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
       {% for message, category in messages %}
         {% if category == 'danger' %}
-        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        <div class="alert alert-danger alert-dismissible fade show align-items-center" role="alert">
           {{ message }}
           <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
         {% else %}
-        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        <div class="alert alert-success alert-dismissible fade show align-items-center" role="alert">
           {{ message }}
           <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         {% endif %}
@@ -111,26 +182,41 @@
         <input type="hidden" name="hidden_date" id="hidden_date" value="{{date}}">
           <div class="d-flex flex-column flex-md-row p-4 gap-4 py-md-5 align-items-center justify-content-center">
             <div class="list-group list-group-radio d-grid gap-2 border-0">
-        {% for timeslot in timeslots %}
-              {% if loop.index == 1 %}
-              {% if appointments[{{date}}]%}
-              {% else %}
-              {% endif %}
-                <div class="position-relative">
-                <input class="form-check-input position-absolute top-50 end-0 me-3 fs-5" type="radio" name="listGroupRadioGrid" id="listGroupRadioGrid_{{timeslot}}" value="{{timeslot}}" checked="">
-                <label class="list-group-item rounded-3 py-3 pe-5" for="listGroupRadioGrid_{{timeslot}}">
-                  <strong class="fw-semibold">{{ timeslot }}</strong>
-                </label>
-              </div>
-              {% else %}
-              <div class="position-relative">
-                <input class="form-check-input position-absolute top-50 end-0 me-3 fs-5" type="radio" name="listGroupRadioGrid" id="listGroupRadioGrid_{{timeslot}}" value="{{timeslot}}">
-                <label class="list-group-item rounded-3 py-3 pe-5" for="listGroupRadioGrid_{{timeslot}}">
-                  <strong class="fw-semibold">{{ timeslot }}</strong>
-                </label>
-              </div>
-              {% endif %}
-        {% endfor %}
+              {% for timeslot in timeslots %}
+                {% if timeslot in busy_today %}
+                {% if loop.index == 1 %}
+                    <div class="position-relative">
+                    <input class="form-check-input position-absolute top-50 end-0 me-3 fs-5" type="radio" name="listGroupRadioGrid" id="listGroupRadioGrid_{{timeslot}}" value="{{timeslot}}" checked="" disabled="">
+                    <label class="list-group-item rounded-3 py-3 pe-5" for="listGroupRadioGrid_{{timeslot}}">
+                      <strong class="fw-semibold">{{ timeslot }}</strong>
+                    </label>
+                  </div>
+                  {% else %}
+                  <div class="position-relative">
+                    <input class="form-check-input position-absolute top-50 end-0 me-3 fs-5" type="radio" name="listGroupRadioGrid" id="listGroupRadioGrid_{{timeslot}}" value="{{timeslot}}" disabled="">
+                    <label class="list-group-item rounded-3 py-3 pe-5" for="listGroupRadioGrid_{{timeslot}}">
+                      <strong class="fw-semibold">{{ timeslot }}</strong>
+                    </label>
+                  </div>
+                  {% endif %}
+                {% else %}
+                  {% if loop.index == 1 %}
+                    <div class="position-relative">
+                    <input class="form-check-input position-absolute top-50 end-0 me-3 fs-5" type="radio" name="listGroupRadioGrid" id="listGroupRadioGrid_{{timeslot}}" value="{{timeslot}}" checked="">
+                    <label class="list-group-item rounded-3 py-3 pe-5" for="listGroupRadioGrid_{{timeslot}}">
+                      <strong class="fw-semibold">{{ timeslot }}</strong>
+                    </label>
+                  </div>
+                  {% else %}
+                  <div class="position-relative">
+                    <input class="form-check-input position-absolute top-50 end-0 me-3 fs-5" type="radio" name="listGroupRadioGrid" id="listGroupRadioGrid_{{timeslot}}" value="{{timeslot}}">
+                    <label class="list-group-item rounded-3 py-3 pe-5" for="listGroupRadioGrid_{{timeslot}}">
+                      <strong class="fw-semibold">{{ timeslot }}</strong>
+                    </label>
+                  </div>
+                  {% endif %}
+                {% endif %}
+              {% endfor %}
           <button class="btn btn-primary rounded-pill px-3" type="confirm" onclick="confirmBox()">Confirm</button>
           </div>
         </div>

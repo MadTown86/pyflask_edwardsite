@@ -4,6 +4,7 @@
 import logging
 import os
 import flask
+import json as JSON
 
 # Importing Specific Libraries
 from os.path import join, dirname
@@ -454,12 +455,29 @@ def schedule_page():
     user = session.get('user')
     if request.method == 'GET':
         try:
+            # Fetch Appointments
+            #TODO Filter By Trainer and Pull Less Information
             appointments = Appointments.query.group_by(Appointments.appointment_date).all()
+            
+            # Group Appointments By Date in DefaultDict
             appts_by_date = defaultdict(list)
             for appt in appointments:
                 appts_by_date[appt.appointment_date.strftime(justdate)].append(appt.appointment_time.strftime(datefmtoutput))
-            print(appts_by_date)
-            return render_template("/pages/schedule.jinja", year=year, user=user, timeslots=timeslots, date=date, appointments=appointments)
+            
+            # Convert DefaultDict to Python Dictionary for JSON serialization/mapping
+            appts_to_pydict = {}
+            busy_today = []
+            for key, values in appts_by_date.items():
+                appts_to_pydict[key] = values
+            for key, values in appts_by_date.items():
+                if key == date:
+                    busy_today = values
+            print(busy_today)
+            to_json = JSON.dumps(appts_to_pydict)
+
+            # Get Appointment Dates Alone No Values
+            appointment_dates = list(appts_by_date.keys())
+            return render_template("/pages/schedule.jinja", year=year, user=user, timeslots=timeslots, date=date, appointment_dates=appointment_dates, appts_by_date=appts_by_date, json_appts=to_json, busy_today=busy_today)
         except Exception as e:
             print(e)
             flash('Error Fetching Appointments', 'danger')
