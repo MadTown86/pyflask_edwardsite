@@ -226,7 +226,8 @@ def member_page():
     if request.method == 'GET':
         user = session.get('user')
         appointments = Appointments.query.filter_by(customer_id=user['id']).all()
-        print(appointments[0].appointment_date, appointments[0].appointment_time, appointments[0].confirmed)
+        if appointments:
+            print(appointments[0].appointment_date, appointments[0].appointment_time, appointments[0].confirmed)
         if user:
             return render_template("/pages/member.jinja", year=year, user=user, appointments=appointments)
         else:
@@ -458,6 +459,7 @@ def schedule_page():
             # Fetch Appointments
             #TODO Filter By Trainer and Pull Less Information
             appointments = Appointments.query.group_by(Appointments.appointment_date).all()
+            db.session.close()
             
             # Group Appointments By Date in DefaultDict
             appts_by_date = defaultdict(list)
