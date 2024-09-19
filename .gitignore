@@ -5885,3 +5885,7 @@ templates/pages/navbar_test.jinja
 templates/partials/header_test.jinja
 templates/base_test.jinja
 templates/pages/navbar_test.jinja
+pyflask_log.log
+requests.log
+pyflask_log.log
+pyflask_log.log
