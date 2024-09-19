@@ -156,16 +156,25 @@
     <main>
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
-      {% for message, category in messages %}
+      {% for category, message in messages %}
         {% if category == 'danger' %}
         <div class="alert alert-danger alert-dismissible fade show align-items-center" role="alert">
           {{ message }}
+          <h3>Please Try Again Later!</h3>
           <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div>
+        <button type="button" class="confirm" formaction="/schedule" aria-label="Back To Schedule"></button>
         </div>
         {% else %}
         <div class="alert alert-success alert-dismissible fade show align-items-center" role="alert">
           {{ message }}
+          <h3>Appointment request sent.  Please wait up to 24 hours for a confirmation!</h3>
           <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div>
+          <button type="button" class="confirm" formaction="/schedule" aria-label="Back To Schedule"></button>
+        </div>
         {% endif %}
       {% endfor %}
     {% else %}

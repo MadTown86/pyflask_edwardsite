@@ -9,10 +9,14 @@ import json as JSON
 # Importing Specific Libraries
 from os.path import join, dirname
 from dotenv import load_dotenv
+from logging.config import dictConfig
 from logging.handlers import RotatingFileHandler
+from flask.logging import default_handler
+from flask import has_request_context, request
 from flask import Flask, render_template, \
-request, redirect, url_for, session, flash
+redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import text
 from werkzeug.security import generate_password_hash, check_password_hash
 import time as tt
 from authlib.integrations.flask_client import OAuth
@@ -21,19 +25,82 @@ from datetime import datetime, timedelta, timezone
 from logging.handlers import SMTPHandler
 from collections import defaultdict
 
-
 # Load Environment Variables
 load_dotenv("vars\\.env")
+
+#region Configuration
+# Config Logging
+
+logging.basicConfig()
+logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+
+dictConfig({
+    'version': 1,
+    'formatters': {'default': {
+        'format': '[%(asctime)s] %(levelname)s in %(module)s: %(message)s',
+    }},
+    'handlers': {'wsgi': {
+        'class': 'logging.StreamHandler',
+        'stream': 'ext://flask.logging.wsgi_errors_stream',
+        'formatter': 'default'
+    }},
+    'root': {
+        'level': 'DEBUG',
+        'handlers': ['wsgi']
+    }
+})
+
+class RequestFormatter(logging.Formatter):
+    def format(self, record):
+        if has_request_context():
+            record.url = request.url
+            record.remote_addr = request.remote_addr
+        else:
+            record.url = None
+            record.remote_addr = None
+
+        return super().format(record)
+
+formatter = RequestFormatter(
+    '[%(asctime)s] %(remote_addr)s requested %(url)s\n'
+    '%(levelname)s in %(module)s: %(message)s'
+)
+
+# Logging Handlers
+debug_handler = RotatingFileHandler(os.getenv("FILE_HANDLER_LOCATION"), maxBytes=10000, backupCount=1)
+debug_handler.setLevel(logging.DEBUG)
+debug_handler.setFormatter(formatter)
+
+request_db_handler = RotatingFileHandler(os.getenv("REQUEST_HANDLER_LOCATION"), maxBytes=10000, backupCount=1)
+request_db_handler.setLevel(logging.INFO)
+request_db_handler.setFormatter(formatter)
 
 # Create Flask App
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY")
 
+# Add Handler to App Logger
+app.logger.addHandler(debug_handler)
+app.logger.addHandler(request_db_handler)
+app.logger.info("Application Started")
+
+if not app.debug:
+    mail_handler = SMTPHandler(
+        mailhost=('mail.visions.fit', 465),
+        fromaddr='reset@visions.fit',
+        toaddrs=['grover.donlon@gmail.com'],
+        subject='Application Error',
+        credentials=('reset@visions.fit', 'ThePassword1-1'),
+        secure=()
+    )
+    mail_handler.setLevel(logging.ERROR)
+    app.logger.addHandler(mail_handler)
+
 # MySQL Config
 app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
 app.config['SQLALCHEMY_POOL_SIZE'] = 10
-app.config['SQLALCHEMY_POOL_TIMEOUT'] = 30
+app.config['SQLALCHEMY_POOL_TIMEOUT'] = 28800
 app.config['SQLALCHEMY_POOL_RECYCLE'] = 1800
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
@@ -67,6 +134,8 @@ oauth.register(
 # Pre-defined Module Level Variables
 now = datetime.now
 year = tt.strftime("%Y")
+
+#endregion Configuration-
 
 #region MySQL Classes
 # MySQL User Class
@@ -139,22 +208,31 @@ class Appointments(db.Model):
 
 #endregion MySQL Classes
 
-# Logging
-handler = RotatingFileHandler(os.getenv("FILE_HANDLER_LOCATION"), maxBytes=10000, backupCount=1)
-handler.setLevel(logging.INFO)
-app.logger.addHandler(handler)
+#region Logging Decorators
+@app.before_request
+def log_and_prepare_request():
+    app.logger.info('\n\nRequest: %s %s', request.method, request.url)
+    db.session.query(text('SET SESSION sql_mode="TRADITIONAL"')) 
+    
+@app.after_request
+def log_response_info(response):
+    app.logger.info('\n\nResponse: %s', response.status)
+    return response
 
-if not app.debug:
-    mail_handler = SMTPHandler(
-        mailhost=('mail.visions.fit', 465),
-        fromaddr='reset@visions.fit',
-        toaddrs=['grover.donlon@gmail.com'],
-        subject='Application Error',
-        credentials=('reset@visions.fit', 'ThePassword1-1'),
-        secure=()
-    )
-    mail_handler.setLevel(logging.ERROR)
-    app.logger.addHandler(mail_handler)
+@app.teardown_request
+def log_request_time(exception=None):
+    app.logger.info('\n\nRequest Time: %s', tt.time())
+    
+    
+#endregion Logging Decorators
+
+#region Error Handling
+@app.errorhandler(Exception)
+def handle_exception(e):
+    app.logger.error('\n\nAn error occurred during a request.', exc_info=e)
+    return 'An internal error occurred', 500
+
+#endregion Error Handling
 
 
 
@@ -216,6 +294,7 @@ def contact_page():
             return redirect(url_for('contact_page'))
         except Exception as e:
             print(e)
+            app.logger.error('\n\nError Sending Email', exc_info=e)
             flash('Internal Error - Please Try Again Later', 'danger')
             return redirect(url_for('contact_page'))
         
@@ -225,12 +304,21 @@ def member_page():
     user = session.get('user')
     if request.method == 'GET':
         user = session.get('user')
-        appointments = Appointments.query.filter_by(customer_id=user['id']).all()
-        print(appointments[0].appointment_date, appointments[0].appointment_time, appointments[0].confirmed)
+        
+        try: 
+            appointments = Appointments.query.filter_by(customer_id=user['id']).all()
+            print(appointments[0].appointment_date, appointments[0].appointment_time, appointments[0].confirmed)
+        except Exception as e:
+            print(e)
+            app.logger.error('\n\nError Fetching Appointments', exc_info=e)
+            flash('Error Fetching Appointments', 'danger')
+            return redirect(url_for('member_page'))
+        
         if user:
             return render_template("/pages/member.jinja", year=year, user=user, appointments=appointments)
         else:
             return redirect(url_for('login_page'))
+        
     elif request.method == 'POST':
         #TODO Write code for post method on member page, perhaps allow password change right there.
         return redirect(url_for('member_page'))
@@ -393,7 +481,7 @@ def login_page():
                 print(user.id, user.email, user.user_type)
                 if user.user_type == 'native':
                     if user and check_password_hash(user.password, password):
-                        session['user'] = {"email":user.email, "id":user.id}
+                        session['user'] = {"email":user.email, "id":user.id, "user_type":user.user_type}
                         return render_template('pages/member.jinja', year=year, user=user)
                 else:
                     user_types.append(user.user_type)
@@ -458,6 +546,7 @@ def schedule_page():
             # Fetch Appointments
             #TODO Filter By Trainer and Pull Less Information
             appointments = Appointments.query.group_by(Appointments.appointment_date).all()
+            db.session.close()
             
             # Group Appointments By Date in DefaultDict
             appts_by_date = defaultdict(list)
@@ -548,3 +637,4 @@ def test_page():
 # Run App
 if __name__ == "__main__":
     app.run(debug=True)
+    app.logger.info("Application Started")
