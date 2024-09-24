@@ -11,6 +11,7 @@ from os.path import join, dirname
 from dotenv import load_dotenv
 from logging.config import dictConfig
 from logging.handlers import RotatingFileHandler
+from logging.handlers import QueueHandler, QueueListener
 from flask.logging import default_handler
 from flask import has_request_context, request
 from flask import Flask, render_template, \
@@ -24,6 +25,7 @@ from flask_mail import Mail, Message
 from datetime import datetime, timedelta, timezone
 from logging.handlers import SMTPHandler
 from collections import defaultdict
+from queue import Queue
 
 # Load Environment Variables
 load_dotenv("vars\\.env")
@@ -66,14 +68,20 @@ formatter = RequestFormatter(
     '%(levelname)s in %(module)s: %(message)s'
 )
 
+# Logging Queue
+log_queue = Queue()
+queue_handler = QueueHandler(log_queue)
+
 # Logging Handlers
 debug_handler = RotatingFileHandler(os.getenv("FILE_HANDLER_LOCATION"), maxBytes=10000, backupCount=1)
 debug_handler.setLevel(logging.DEBUG)
 debug_handler.setFormatter(formatter)
+listener = QueueListener(log_queue, debug_handler)
 
 request_db_handler = RotatingFileHandler(os.getenv("REQUEST_HANDLER_LOCATION"), maxBytes=10000, backupCount=1)
 request_db_handler.setLevel(logging.INFO)
 request_db_handler.setFormatter(formatter)
+listener_db = QueueListener(log_queue, request_db_handler)
 
 # Create Flask App
 app = Flask(__name__)
@@ -82,7 +90,10 @@ app.secret_key = os.getenv("SECRET_KEY")
 # Add Handler to App Logger
 app.logger.addHandler(debug_handler)
 app.logger.addHandler(request_db_handler)
+app.logger.addHandler(queue_handler)
 app.logger.info("Application Started")
+listener.start()
+listener_db.start()
 
 if not app.debug:
     mail_handler = SMTPHandler(
@@ -129,6 +140,17 @@ oauth.register(
     client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
     server_metadata_url=CONF_URL,
     client_kwargs={'scope': 'openid email profile'}
+)
+oauth.register(
+    name='facebook',
+    client_id=os.getenv("FACEBOOK_CLIENT_ID"),
+    client_secret=os.getenv("FACEBOOK_CLIENT_SECRET"),
+    access_token_url='https://graph.facebook.com/oauth/access_token',
+    access_token_params=None,
+    authorize_url='https://www.facebook.com/dialog/oauth',
+    authorize_params=None,
+    api_base_url='https://graph.facebook.com/',
+    client_kwargs={'scope': 'email'},  
 )
 
 # Pre-defined Module Level Variables
@@ -294,7 +316,6 @@ def contact_page():
             return redirect(url_for('contact_page'))
         except Exception as e:
             print(e)
-            app.logger.error('\n\nError Sending Email', exc_info=e)
             flash('Internal Error - Please Try Again Later', 'danger')
             return redirect(url_for('contact_page'))
         
@@ -304,13 +325,11 @@ def member_page():
     user = session.get('user')
     if request.method == 'GET':
         user = session.get('user')
-        
         try: 
             appointments = Appointments.query.filter_by(customer_id=user['id']).all()
             print(appointments[0].appointment_date, appointments[0].appointment_time, appointments[0].confirmed)
         except Exception as e:
             print(e)
-            app.logger.error('\n\nError Fetching Appointments', exc_info=e)
             flash('Error Fetching Appointments', 'danger')
             return redirect(url_for('member_page'))
         
@@ -601,6 +620,20 @@ def auth_google():
 def auth_facebook():
     redirect_uri = url_for('auth_facebook_callback', _external=True)
     return oauth.facebook.authorize_redirect(redirect_uri)
+
+@app.route("/auth/facebook/callback")
+def auth_facebook_callback():
+    try:
+        token = oauth.facebook.authorize_access_token()
+        resp = oauth.facebook.get(
+            'https://graph.facebook.com/me?fields=id,name,email')
+        profile = resp.json()
+        print("Facebook User ", profile)
+        email = profile['email']
+        session['user'] = {"email":email, "id":profile['id'], "user_type":'facebook'}
+    except Exception as e:
+        print(e)
+    return redirect(url_for('member_page'))
 
 # Google Auth Callback Route
 @app.route("/auth/google/callback")
