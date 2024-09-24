@@ -69,19 +69,19 @@ formatter = RequestFormatter(
 )
 
 # Logging Queue
-log_queue = Queue()
-queue_handler = QueueHandler(log_queue)
+# log_queue = Queue()
+# queue_handler = QueueHandler(log_queue)
 
 # Logging Handlers
 debug_handler = RotatingFileHandler(os.getenv("FILE_HANDLER_LOCATION"), maxBytes=10000, backupCount=1)
 debug_handler.setLevel(logging.DEBUG)
 debug_handler.setFormatter(formatter)
-listener = QueueListener(log_queue, debug_handler)
+# listener = QueueListener(log_queue, debug_handler)
 
-request_db_handler = RotatingFileHandler(os.getenv("REQUEST_HANDLER_LOCATION"), maxBytes=10000, backupCount=1)
-request_db_handler.setLevel(logging.INFO)
-request_db_handler.setFormatter(formatter)
-listener_db = QueueListener(log_queue, request_db_handler)
+# request_db_handler = RotatingFileHandler(os.getenv("REQUEST_HANDLER_LOCATION"), maxBytes=10000, backupCount=1)
+# request_db_handler.setLevel(logging.INFO)
+# request_db_handler.setFormatter(formatter)
+# listener_db = QueueListener(log_queue, request_db_handler)
 
 # Create Flask App
 app = Flask(__name__)
@@ -89,11 +89,11 @@ app.secret_key = os.getenv("SECRET_KEY")
 
 # Add Handler to App Logger
 app.logger.addHandler(debug_handler)
-app.logger.addHandler(request_db_handler)
-app.logger.addHandler(queue_handler)
-app.logger.info("Application Started")
-listener.start()
-listener_db.start()
+# app.logger.addHandler(request_db_handler)
+# app.logger.addHandler(queue_handler)
+# app.logger.info("Application Started")
+# listener.start()
+# listener_db.start()
 
 if not app.debug:
     mail_handler = SMTPHandler(
@@ -150,7 +150,7 @@ oauth.register(
     authorize_url='https://www.facebook.com/dialog/oauth',
     authorize_params=None,
     api_base_url='https://graph.facebook.com/',
-    client_kwargs={'scope': 'email'},  
+    client_kwargs={'scope': 'email public_profile'},  
 )
 
 # Pre-defined Module Level Variables
@@ -233,17 +233,17 @@ class Appointments(db.Model):
 #region Logging Decorators
 @app.before_request
 def log_and_prepare_request():
-    app.logger.info('\n\nRequest: %s %s', request.method, request.url)
+    app.logger.debug('\n\nRequest: %s %s', request.method, request.url)
     db.session.query(text('SET SESSION sql_mode="TRADITIONAL"')) 
     
 @app.after_request
 def log_response_info(response):
-    app.logger.info('\n\nResponse: %s', response.status)
+    app.logger.debug('\n\nResponse: %s', response.status)
     return response
 
 @app.teardown_request
 def log_request_time(exception=None):
-    app.logger.info('\n\nRequest Time: %s', tt.time())
+    app.logger.debug('\n\nRequest Time: %s', tt.time())
     
     
 #endregion Logging Decorators
@@ -618,22 +618,28 @@ def auth_google():
 
 @app.route("/auth/facebook")
 def auth_facebook():
-    redirect_uri = url_for('auth_facebook_callback', _external=True)
-    return oauth.facebook.authorize_redirect(redirect_uri)
+    redirect_uri_facebook = url_for('auth_facebook_callback', _external=True)
+    return oauth.facebook.authorize_redirect(redirect_uri_facebook)
 
 @app.route("/auth/facebook/callback")
 def auth_facebook_callback():
     try:
         token = oauth.facebook.authorize_access_token()
+        if token is None:
+            flash('Error Fetching Token', 'danger')
+            return redirect(url_for('login_page'))
         resp = oauth.facebook.get(
             'https://graph.facebook.com/me?fields=id,name,email')
+        if resp is None:
+            flash('Error Fetching User Data', 'danger')
+            return redirect(url_for('login_page'))
         profile = resp.json()
         print("Facebook User ", profile)
         email = profile['email']
         session['user'] = {"email":email, "id":profile['id'], "user_type":'facebook'}
     except Exception as e:
         print(e)
-    return redirect(url_for('member_page'))
+    
 
 # Google Auth Callback Route
 @app.route("/auth/google/callback")
