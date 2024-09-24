@@ -597,6 +597,11 @@ def auth_google():
     redirect_uri = url_for('auth_google_callback', _external=True)
     return oauth.google.authorize_redirect(redirect_uri)
 
+@app.route("/auth/facebook")
+def auth_facebook():
+    redirect_uri = url_for('auth_facebook_callback', _external=True)
+    return oauth.facebook.authorize_redirect(redirect_uri)
+
 # Google Auth Callback Route
 @app.route("/auth/google/callback")
 def auth_google_callback():

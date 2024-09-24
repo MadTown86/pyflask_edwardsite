@@ -3,8 +3,28 @@
 <script>
     document.getElementById('login_nav').classList.add('active')
     document.getElementById('login_nav').classList.add('text-light')
+    window.fbAsyncInit = function() {
+      FB.init({
+        appId      : '{your-app-id}',
+        cookie     : true,
+        xfbml      : true,
+        version    : '{api-version}'
+      });
+        
+      FB.AppEvents.logPageView();   
+        
+    };
+
+    (function(d, s, id){
+      var js, fjs = d.getElementsByTagName(s)[0];
+      if (d.getElementById(id)) {return;}
+      js = d.createElement(s); js.id = id;
+      js.src = "https://connect.facebook.net/en_US/sdk.js";
+      fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));
 </script>
 <meta name="google-signin-client_id" content="422364261021-6co59ivuvg2ccu3rt8tjjfr14ihi3geo.apps.googleusercontent.com">
+
 <style>
         .nav {--bs-nav-link-color: "#fff";}
 </style>
