@@ -1,0 +1,24 @@
+{% extends "/base.jinja" %}
+{% block content %}
+<body>
+<div class="px-4 py-5 my-5 text-center">
+    <h1 class="display-5 fw-bold text-body-emphasis">Warning - Replace Existing Login Credentials?</h1>
+    <div class="col-lg-6 mx-auto">
+      <p class="lead mb-4">Our system shows that your email is already associated with the following login type:</p>
+      <p><h3>{{ account_type }}</h3></p>
+      <p class="lead mb-4">Would you like to replace the existing login credentials with the new one from <b>{{login_type}}</b>?</p>
+      <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+      <form method="POST">
+        <input type="hidden" name="account_type" value="{{ account_type }}">
+        <input type="hidden" name="login_type" value="{{ login_type }}">
+        <input type="hidden" name="email" value="{{ email }}">
+        <button type="button" class="btn btn-primary btn-lg px-4 gap-3" formmethod="POST" formaction="/rewrite_credentials">Confirm Change</button>
+        <button type="button" class="btn btn-outline-secondary btn-lg px-4" formmethod="GET" formaction="/login">Alternate Login</button>
+      </form>
+        
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+{% endblock content %}

@@ -36,21 +36,21 @@ load_dotenv("vars\\.env")
 logging.basicConfig()
 logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
-dictConfig({
-    'version': 1,
-    'formatters': {'default': {
-        'format': '[%(asctime)s] %(levelname)s in %(module)s: %(message)s',
-    }},
-    'handlers': {'wsgi': {
-        'class': 'logging.StreamHandler',
-        'stream': 'ext://flask.logging.wsgi_errors_stream',
-        'formatter': 'default'
-    }},
-    'root': {
-        'level': 'DEBUG',
-        'handlers': ['wsgi']
-    }
-})
+# dictConfig({
+#     'version': 1,
+#     'formatters': {'default': {
+#         'format': '[%(asctime)s] %(levelname)s in %(module)s: %(message)s',
+#     }},
+#     'handlers': {'wsgi': {
+#         'class': 'logging.StreamHandler',
+#         'stream': 'ext://flask.logging.wsgi_errors_stream',
+#         'formatter': 'default'
+#     }},
+#     'root': {
+#         'level': 'DEBUG',
+#         'handlers': ['wsgi']
+#     }
+# })
 
 class RequestFormatter(logging.Formatter):
     def format(self, record):
@@ -73,9 +73,9 @@ formatter = RequestFormatter(
 # queue_handler = QueueHandler(log_queue)
 
 # Logging Handlers
-debug_handler = RotatingFileHandler(os.getenv("FILE_HANDLER_LOCATION"), maxBytes=10000, backupCount=1)
-debug_handler.setLevel(logging.DEBUG)
-debug_handler.setFormatter(formatter)
+# debug_handler = RotatingFileHandler(os.getenv("FILE_HANDLER_LOCATION"), maxBytes=10000, backupCount=1)
+# debug_handler.setLevel(logging.DEBUG)
+# debug_handler.setFormatter(formatter)
 # listener = QueueListener(log_queue, debug_handler)
 
 # request_db_handler = RotatingFileHandler(os.getenv("REQUEST_HANDLER_LOCATION"), maxBytes=10000, backupCount=1)
@@ -88,7 +88,7 @@ app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY")
 
 # Add Handler to App Logger
-app.logger.addHandler(debug_handler)
+# app.logger.addHandler(debug_handler)
 # app.logger.addHandler(request_db_handler)
 # app.logger.addHandler(queue_handler)
 # app.logger.info("Application Started")
@@ -141,6 +141,7 @@ oauth.register(
     server_metadata_url=CONF_URL,
     client_kwargs={'scope': 'openid email profile'}
 )
+# Facebook Auth Config
 oauth.register(
     name='facebook',
     client_id=os.getenv("FACEBOOK_CLIENT_ID"),
@@ -169,6 +170,7 @@ class User(db.Model):
     lN = db.Column(db.String(255), nullable=False)
     password = db.Column(db.String(255), nullable=False)
     user_type = db.Column(db.String(255), nullable=False, default='native')
+    token = db.Column(db.String(255), nullable=True, default=None)
 
 # MySQL message Class
 class MessageDB(db.Model):
@@ -623,22 +625,27 @@ def auth_facebook():
 
 @app.route("/auth/facebook/callback")
 def auth_facebook_callback():
-    try:
         token = oauth.facebook.authorize_access_token()
-        if token is None:
-            flash('Error Fetching Token', 'danger')
-            return redirect(url_for('login_page'))
         resp = oauth.facebook.get(
             'https://graph.facebook.com/me?fields=id,name,email')
-        if resp is None:
-            flash('Error Fetching User Data', 'danger')
-            return redirect(url_for('login_page'))
         profile = resp.json()
         print("Facebook User ", profile)
         email = profile['email']
-        session['user'] = {"email":email, "id":profile['id'], "user_type":'facebook'}
-    except Exception as e:
-        print(e)
+        if not email:
+            flash('Email Not Found', 'danger')
+            return redirect(url_for('login_page'))
+        user_lookup = User.query.filter_by(email=profile['email']).all()
+        if not user_lookup:
+            user_fN, user_lN = profile['name'].split(' ')
+            user = User(email=email, fN=user_fN, lN=user_lN, password='facebook', user_type='facebook')
+            db.session.add(user)
+            db.session.commit()
+            session['user'] = {"email":email, "id":user.id, "user_type":user.user_type}
+            flash('User Registered Successfully', 'success')
+            return redirect(url_for('member_page'))
+        else:
+            return render_template("/pages/warning.jinja", year=year, account_type=user_lookup[0].user_type, login_type='facebook', user=user_lookup)
+        
     
 
 # Google Auth Callback Route
@@ -647,9 +654,13 @@ def auth_google_callback():
     token = oauth.google.authorize_access_token()
     user_info_google = token['userinfo']
     email = user_info_google['email']
-    google_users = User.query.filter_by(email=email, user_type='google').first()
-    print(google_users)
-    if not google_users:
+    if email.split('@')[1] == 'googlemail.com':
+        email_alternate = email.split('@')[0] + '@gmail.com'
+    user_lookup = User.query.filter_by(email=email).all()
+    if not user_lookup:
+        user_lookup = User.query.filter_by(email=email_alternate).all()
+    print(user_lookup)
+    if not user_lookup:
         user_fN = user_info_google['given_name']
         user_lN = user_info_google['family_name']
         user = User(email=email, fN=user_fN, lN=user_lN, password='google', user_type='google')
@@ -659,10 +670,21 @@ def auth_google_callback():
         flash('User Registered Successfully', 'success')
         return redirect(url_for('member_page'))
     else:
-        session['user'] = {'id':google_users.id, 'email':google_users.email, 'user_type':google_users.user_type}
-        user = session.get('user')
-        flash('User Logged In Successfully', 'success')
-        return redirect(url_for('member_page'))
+        if user_lookup[0].user_type == 'google':
+            session['user'] = {'id':user_lookup.id, 'email':user_lookup.email, 'user_type':user_lookup.user_type}
+            user = session.get('user')
+            flash('User Logged In Successfully', 'success')
+            return redirect(url_for('member_page'))
+        else:
+            return render_template("/pages/warning.jinja", year=year, account_type=user_lookup[0].user_type, login_type='google', user=user_lookup)
+        
+@app.route("/rewrite_credentials")
+def rewrite_credentials():
+    data = request.
+    print(data)
+    print("Rewriting Credentials")
+    return render_template("/pages/login.jinja", year=year)
+    
 #endregion
 
 # Logout Route

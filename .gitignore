@@ -5897,3 +5897,4 @@ vars/request.log
 requests_log.log
 pyflask_log.log.1
 requests_log.log.1
+vars/flask_log.log.1
