@@ -631,10 +631,7 @@ def auth_facebook_callback():
         profile = resp.json()
         print("Facebook User ", profile)
         email = profile['email']
-        if not email:
-            flash('Email Not Found', 'danger')
-            return redirect(url_for('login_page'))
-        user_lookup = User.query.filter_by(email=profile['email']).all()
+        user_lookup = User.query.filter_by(email=email).all()
         if not user_lookup:
             user_fN, user_lN = profile['name'].split(' ')
             user = User(email=email, fN=user_fN, lN=user_lN, password='facebook', user_type='facebook')
@@ -644,13 +641,26 @@ def auth_facebook_callback():
             flash('User Registered Successfully', 'success')
             return redirect(url_for('member_page'))
         else:
-            return render_template("/pages/warning.jinja", year=year, account_type=user_lookup[0].user_type, login_type='facebook', user=user_lookup)
+            user_type = user_lookup[0].user_type
+            if user_type == 'facebook':
+                session['user'] = {'id':user_lookup[0].id, 'email':user_lookup[0].email, 'user_type':user_lookup[0].user_type}
+                user = session.get('user')
+                flash('User Logged In Successfully', 'success')
+                return redirect(url_for('member_page'))
+            else:
+                login_type = 'facebook'
+                return render_template("/pages/warning.jinja", year=year, account_type=user_lookup[0].user_type, login_type='facebook', email=email)
         
     
 
 # Google Auth Callback Route
 @app.route("/auth/google/callback")
 def auth_google_callback():
+    """
+    Retrieve access token
+    Check for users with both types of email domain
+
+    """
     token = oauth.google.authorize_access_token()
     user_info_google = token['userinfo']
     email = user_info_google['email']
@@ -659,7 +669,7 @@ def auth_google_callback():
     user_lookup = User.query.filter_by(email=email).all()
     if not user_lookup:
         user_lookup = User.query.filter_by(email=email_alternate).all()
-    print(user_lookup)
+    print('\n\n***THIS IS USER LOOKUP*** \n\n', user_lookup)
     if not user_lookup:
         user_fN = user_info_google['given_name']
         user_lN = user_info_google['family_name']
@@ -671,19 +681,37 @@ def auth_google_callback():
         return redirect(url_for('member_page'))
     else:
         if user_lookup[0].user_type == 'google':
-            session['user'] = {'id':user_lookup.id, 'email':user_lookup.email, 'user_type':user_lookup.user_type}
+            session['user'] = {'id':user_lookup[0].id, 'email':user_lookup[0].email, 'user_type':user_lookup[0].user_type}
             user = session.get('user')
             flash('User Logged In Successfully', 'success')
             return redirect(url_for('member_page'))
         else:
-            return render_template("/pages/warning.jinja", year=year, account_type=user_lookup[0].user_type, login_type='google', user=user_lookup)
+            return render_template("/pages/warning.jinja", year=year, account_type=user_lookup[0].user_type, login_type='google', email=user_lookup[0].email)
         
-@app.route("/rewrite_credentials")
+@app.route("/rewrite_credentials", methods=['POST'])
 def rewrite_credentials():
-    data = request.
-    print(data)
-    print("Rewriting Credentials")
-    return render_template("/pages/login.jinja", year=year)
+    if request.method == 'POST':
+        #TODO get user information and write credentials to database to over-write login credentials with an alternate approved credential
+        change_to = request.form.get("login_type")
+        login_type = request.form.get("account_type")
+        email = request.form.get("email")
+        user = User.query.filter_by(email=email).all()
+        if not user:
+            flash("Email Not Found", "danger")
+            return redirect(url_for('login_page'))
+        else:
+            if change_to == 'google' or change_to == 'facebook':
+                user = user[0]
+                password = change_to
+                user.user_type = change_to
+                user.password = password
+                db.session.add(user)
+                db.session.commit()
+                session['user'] = {'id':user.id, 'email':user.email, 'user_type':user.user_type}
+                flash('User Logged In Successfully and Login Type Changed', 'success')
+                return redirect(url_for('member_page'))
+            else:
+                flash('<p>You Cannot Change To Native Login From OAuth,</p> <p>Please Delete Account and Re-Register</p>', 'danger')
     
 #endregion
 

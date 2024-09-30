@@ -7,18 +7,24 @@
       <p class="lead mb-4">Our system shows that your email is already associated with the following login type:</p>
       <p><h3>{{ account_type }}</h3></p>
       <p class="lead mb-4">Would you like to replace the existing login credentials with the new one from <b>{{login_type}}</b>?</p>
+    <div class="col-lg-6 mx-auto">
+    <p>{{ account_type }}</p>
+    <p>{{ login_type }}</p>
+    <p>{{ email }}</p>
+    </div>
       <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
-      <form method="POST">
+      <form method="post" action="/rewrite_credentials">
         <input type="hidden" name="account_type" value="{{ account_type }}">
         <input type="hidden" name="login_type" value="{{ login_type }}">
         <input type="hidden" name="email" value="{{ email }}">
-        <button type="button" class="btn btn-primary btn-lg px-4 gap-3" formmethod="POST" formaction="/rewrite_credentials">Confirm Change</button>
-        <button type="button" class="btn btn-outline-secondary btn-lg px-4" formmethod="GET" formaction="/login">Alternate Login</button>
+        <button type='submit' name='change_login' class="btn btn-primary btn-lg px-4 gap-3" formmethod="post" formaction="/rewrite_credentials">Confirm Change</button>
+        <button type='submit' name='other_login' class="btn btn-outline-secondary btn-lg px-4" formmethod="get" formaction="/login">Alternate Login</button>
       </form>
         
       </div>
     </div>
   </div>
 </div>
+<script src="/static/assets/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </body>
 {% endblock content %}
