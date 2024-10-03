@@ -1,27 +1,10 @@
 {% extends "./base.jinja" %}
 {% block content %}
+<div id="fb-root"></div>
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v21.0&appId=873118664153188"></script>
 <script>
     document.getElementById('login_nav').classList.add('active')
     document.getElementById('login_nav').classList.add('text-light')
-    window.fbAsyncInit = function() {
-      FB.init({
-        appId      : '{your-app-id}',
-        cookie     : true,
-        xfbml      : true,
-        version    : '{api-version}'
-      });
-        
-      FB.AppEvents.logPageView();   
-        
-    };
-
-    (function(d, s, id){
-      var js, fjs = d.getElementsByTagName(s)[0];
-      if (d.getElementById(id)) {return;}
-      js = d.createElement(s); js.id = id;
-      js.src = "https://connect.facebook.net/en_US/sdk.js";
-      fjs.parentNode.insertBefore(js, fjs);
-    }(document, 'script', 'facebook-jssdk'));
 </script>
 <meta name="google-signin-client_id" content="422364261021-6co59ivuvg2ccu3rt8tjjfr14ihi3geo.apps.googleusercontent.com">
 
@@ -55,7 +38,8 @@
     </div>
     </a>
     <div>
-    <a href="/auth/facebook">Facebook</a>
+    <img src=""
+    <a href="/auth/facebook"><div class="fb-login-button" data-width="400px" data-size="40px" data-button-type="" data-layout="" data-auto-logout-link="false" data-use-continue-as="false"></div></a> 
     </div>
     <br><hr>
     <div><h1 class="h3 mb-3 fw-normal">Or E-mail and Password</h1></div>
