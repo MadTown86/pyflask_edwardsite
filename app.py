@@ -468,7 +468,22 @@ def register_page():
         password = request.form['password_register_verify']
         password = generate_password_hash(password)
         user = User(email=email, fN=fN, lN=lN, password=password, user_type='native')
+        # Check If User Exists Already
+        # Check Both Types of Google Email Domains
         try:
+            if email.split('@')[1] == 'googlemail.com':
+                email_alternate = email.split('@')[0] + '@gmail.com'
+                user_exists = User.query.filter_by(email=email).all()
+                if not user_exists:
+                    user_exists = User.query.filter_by(email=email_alternate).all()
+            elif email.split('@')[1] == 'gmail.com':
+                email_alternate = email.split('@')[0] + '@googlemail.com'
+                user_exists = User.query.filter_by(email=email).all()
+                if not user_exists:
+                    user_exists = User.query.filter_by(email=email_alternate).all()
+            if user_exists:
+                flash(f'User Already Exists - Login Credentials "{user_exists[0].user_type}"', 'danger')
+                return redirect(url_for('register_page'))
             db.session.add(user)
             db.session.commit()
             flash('User Registered Successfully', 'success')
