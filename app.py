@@ -550,6 +550,9 @@ def delete_page():
             else:
                 try:
                     user = User.query.filter_by(id=user['id']).first()
+                    user_appointments = Appointments.query.filter_by(customer_id=user.id).all()
+                    for appointment in user_appointments:
+                        db.session.delete(appointment)
                     db.session.delete(user)
                     db.session.commit()
                     session.pop('user', None)
