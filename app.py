@@ -571,6 +571,10 @@ def delete_page():
 # Route To Schedule Page
 @app.route("/schedule", methods=['GET', 'POST'])
 def schedule_page():
+    #TODO Need to gray out same-day appointments that are already past the current time
+    #TODO Need to figure out why confirmation of appointment does not show up in member page right after scheduling
+    #TODO Need to add a limit to amount of appointments one can schedule at a time
+    #TODO Need to add secondary list for confirmed appointments and for past appointments
     date = datetime.now().strftime("%m/%d/%Y")
     datefmtinput = '%m/%d/%Y %H:%M:%S'
     datefmtoutput = '%I:%M %p'
