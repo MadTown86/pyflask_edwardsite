@@ -5,6 +5,7 @@ import logging
 import os
 import flask
 import json as JSON
+import datetime
 
 # Importing Specific Libraries
 from os.path import join, dirname
@@ -26,6 +27,7 @@ from datetime import datetime, timedelta, timezone
 from logging.handlers import SMTPHandler
 from collections import defaultdict
 from queue import Queue
+
 
 # Load Environment Variables
 load_dotenv("vars\\.env")
@@ -320,10 +322,12 @@ def contact_page():
             print(e)
             flash('Internal Error - Please Try Again Later', 'danger')
             return redirect(url_for('contact_page'))
-        
+
+
 # Route To Member Page
 @app.route("/member", methods=['GET', 'POST'])
 def member_page():
+
     user = session.get('user')
     if request.method == 'GET':
         user = session.get('user')
@@ -336,7 +340,7 @@ def member_page():
             return redirect(url_for('member_page'))
         
         if user:
-            return render_template("/pages/member.jinja", year=year, user=user, appointments=appointments)
+            return render_template("/pages/member.jinja", year=year, user=user, appointments=appointments, current_date=datetime.now())
         else:
             return redirect(url_for('login_page'))
         
@@ -415,7 +419,7 @@ def email_reset_page(reset_code):
                 return render_template("/pages/reset.jinja", year=year, user=user)
         except Exception as e:
             print(e)
-            flash('Reset Request Not Found', 'danger')
+            flash('Reset Request Not Found', 'danger')  
             return redirect(url_for('reset_request_page'))
 
 # Route To Reset Page                     
@@ -744,9 +748,29 @@ def logout():
     return redirect(url_for('index_page'))
 
 #region Testing Routes
-@app.route("/test")
+@app.route("/test", methods=['GET', 'POST'])
 def test_page():
-    return render_template("/pages/navbar_test.jinja")
+    current_time = datetime.now()
+    user = session.get('user')
+    if request.method == 'GET':
+        user = session.get('user')
+        try: 
+            appointments = Appointments.query.filter_by(customer_id=user['id']).all()
+            print(appointments[0].appointment_date, appointments[0].appointment_time, appointments[0].confirmed)
+        except Exception as e:
+            print(e)
+            flash('Error Fetching Appointments', 'danger')
+            return redirect(url_for('test_page'))
+        
+        if user:
+            return render_template("/pages/test.jinja", year=year, user=user, appointments=appointments, current_time=current_time)
+        else:
+            return redirect(url_for('login_page'))
+        
+    elif request.method == 'POST':
+        #TODO Write code for post method on member page, perhaps allow password change right there.
+        return redirect(url_for('member_page'))
+
 
 #endregion Testing Routes
 

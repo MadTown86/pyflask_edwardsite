@@ -3,6 +3,13 @@
 <script>
     document.getElementById('member_nav').classList.add('active')
     document.getElementById('member_nav').classList.add('text-light')
+    const nowDateTime = new Intl.DateTimeFormat('en-US').format(new Date())
+    console.log('NOWDATETIME:', nowDateTime)
+    currentTime = new Date()
+    const nowTimeString = currentTime.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit', hour12: true})
+    console.log('NOWTIME:', nowTimeString)
+    
+    // Cycle to next schedule date, update timeslots
     function nextClick() {
       //Date Portion
       const nowDate = new Date()
@@ -10,6 +17,8 @@
       const newDate = new Date(dateFromH2)
       const oneDayMilliseconds = 86400000
       const timeDifference = Math.abs(nowDate - newDate)
+
+      console.log('ORGJAVADATE:', nowDate)
       if (timeDifference > 10 * oneDayMilliseconds) {
 
       } else {
@@ -28,30 +37,24 @@
       const orgDateKeys = []
       const formattedDateKeys = []
 
+      // Get the keys of the busyTimeSlotsDict
       for (const [key, value] of Object.entries(busyTimeSlotsDict)) {
         orgDateKeys.push(key)
       }
 
+      // Format the keys of the busyTimeSlotsDict
       for (let i = 0; i < orgDateKeys.length; i++) {
         const formattedDate = new Intl.DateTimeFormat('en-US').format(new Date(orgDateKeys[i]))
         formattedDateKeys.push(formattedDate)
       }
 
-      for (let i = 0; i < timeslots.length; i++) {
-        if (formattedDateKeys.includes(hiddenDate)) {
-          if (busyTimeSlotsDict[orgDateKeys[formattedDateKeys.indexOf(hiddenDate)]].includes(timeslots[i].value)) {
-            timeslots[i].disabled = true
-            timeslots[i].classList.add('bg-danger')
-          } else
-            timeslots[i].disabled = false
-            timeslots[i].classList.remove('bg-danger')
-        } else {
-          timeslots[i].disabled = false
-          timeslots[i].classList.remove('bg-danger')
-        }
-    }
+      console.log(formattedDateKeys)
+
+      // Disable the timeslots that are already booked
+      renderTimeslots(hiddenDate, {{ timeslots | tojson }}, busyTimeSlotsDict[orgDateKeys[formattedDateKeys.indexOf(hiddenDate)]]);
     }
 
+    // Cycle to previous schedule date, update timeslots
     function prevClick() {
       const orgDate = '{{date}}'
       const orgJavaDate = new Date(orgDate)
@@ -59,12 +62,15 @@
       const newDate2 = new Date(dateFromH2)
       newDate2.setDate(newDate2.getDate()-1)
       const timeDifference2 = newDate2 - orgJavaDate
+      console.log('ORG DATE:', orgJavaDate)
+
+      // Check to see if html date is == to orgDate, then disable rest of code
       if (timeDifference2 < 0) {
       } else {
-        document.getElementById('prev-date-button').disabled = false
-        const dateFormatted = new Intl.DateTimeFormat('en-US').format(newDate2)
-        document.getElementById('date').innerText = dateFormatted
-        document.getElementById('hidden_date').value = dateFormatted
+        document.getElementById('prev-date-button').disabled = false // Enable the button
+        const dateFormatted = new Intl.DateTimeFormat('en-US').format(newDate2) // Format the date
+        document.getElementById('date').innerText = dateFormatted // Update the visual date
+        document.getElementById('hidden_date').value = dateFormatted // Update the hidden date
       }
       const hiddenDate = document.getElementById('hidden_date').value
       console.log(hiddenDate)
@@ -75,30 +81,23 @@
       const orgDateKeys = []
       const formattedDateKeys = []
 
+      // Get the keys of the busyTimeSlotsDict
       for (const [key, value] of Object.entries(busyTimeSlotsDict)) {
         orgDateKeys.push(key)
       }
 
+      // Format the keys of the busyTimeSlotsDict
       for (let i = 0; i < orgDateKeys.length; i++) {
         const formattedDate = new Intl.DateTimeFormat('en-US').format(new Date(orgDateKeys[i]))
         formattedDateKeys.push(formattedDate)
       }
 
-      for (let i = 0; i < timeslots.length; i++) {
-        if (formattedDateKeys.includes(hiddenDate)) {
-          if (busyTimeSlotsDict[orgDateKeys[formattedDateKeys.indexOf(hiddenDate)]].includes(timeslots[i].value)) {
-            timeslots[i].disabled = true
-            timeslots[i].classList.add('bg-danger')
-          } else
-            timeslots[i].disabled = false
-            timeslots[i].classList.remove('bg-danger')
-        } else {
-          timeslots[i].disabled = false
-          timeslots[i].classList.remove('bg-danger')
-        }
-    }
+      // Disable the timeslots that are already booked
+      
+      renderTimeslots(hiddenDate, {{ timeslots | tojson }}, busyTimeSlotsDict[orgDateKeys[formattedDateKeys.indexOf(hiddenDate)]]);
     }  
-
+    
+    // Confirm the appointment when 'OK' is clicked
     function confirmClick() {
       const userId = '{{ session.user.id }}';
       const date = document.getElementById('hidden_date').value;
@@ -116,6 +115,7 @@
         date: date,
         time: time
       };
+      // Send the data to the server
       fetch('/schedule', {
         method: 'POST',
         headers: {
@@ -132,6 +132,7 @@
       });
     }
 
+    // Render confirmation box upon click
     function confirmBox() {
       if (window.confirm('Are you sure you want to confirm this appointment?')) {
         confirmClick();
@@ -141,19 +142,55 @@
       
     }
 
-    function renderTimeslots(date, timeslots, busyTimeslots=[]) {
-      for (let i = 0; i < timeslots.length; i++) {
-        if (timeslots[i] in busyTimeslots) {
-          document.getElementById('listGroupRadioGrid_' + timeslots[i]).disabled = true;
-        }
+    // Convert the timeslot time to a Date object for comparison
+    function convertTimeSlotTime(time) {
+      const [timeslot, modifier] = time.split(' ');
+      let [hours, minutes] = timeslot.split(':').map(Number);
+      const timeSlotTime = new Date();
+      if (hours === 12) {
+        hours = 0;
       }
+      if (modifier === 'PM') {
+        hours += 12;
+      }
+      timeSlotTime.setHours(hours, minutes, 0, 0);
+      console.log(timeSlotTime);
+      return timeSlotTime;
     }
 
+    // Render the timeslots for initial day perhaps for all
+    function renderTimeslots(date, timeslots, busyTimeslots=[]) {
+      const now = new Date();
+      if (date === now.toLocaleDateString()) {
+        for (let i = 0; i < timeslots.length; i++) {
+          let renderedTime = convertTimeSlotTime(timeslots[i]);
+          console.log(renderedTime);
+          console.log(now);
+          if (timeslots[i] in busyTimeslots) {
+            document.getElementById('listGroupRadioGrid_' + timeslots[i]).disabled = true;
+          } else if (renderedTime < now) {
+            document.getElementById('listGroupRadioGrid_' + timeslots[i]).disabled = true;
+          } else {
+            document.getElementById('listGroupRadioGrid_' + timeslots[i]).disabled = false;
+          }
+        }
+    } else {
+        for (let i = 0; i < timeslots.length; i++) {
+          let renderedTime = convertTimeSlotTime(timeslots[i]);
+            if (timeslots[i] in busyTimeslots) {
+              document.getElementById('listGroupRadioGrid_' + timeslots[i]).disabled = true;
+            } else {
+              document.getElementById('listGroupRadioGrid_' + timeslots[i]).disabled = false;
+            }
+      }
+    }
+    }
     const appointments = {{ json_appts | tojson }};
     console.log(appointments);
 
 </script>
     <main>
+    {# Pull Messages and Post Messages Sent From Server #}
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
       {% for category, message in messages %}
@@ -178,6 +215,7 @@
         {% endif %}
       {% endfor %}
     {% else %}
+    {# Render Timeslots #}
     {% if timeslots and date %}
       <h1 class="text-center">Schedule</h1>
         <div class="d-flex justify-content-center schedule">
@@ -185,8 +223,6 @@
         <h2 class="text-center" id="date">{{date}}</h2>
         <button id="next-date-button" onclick="nextClick()"><span>&#8594</span></button>
         </div>
-
-      
       <form>
         <input type="hidden" name="hidden_date" id="hidden_date" value="{{date}}">
           <div class="d-flex flex-column flex-md-row p-4 gap-4 py-md-5 align-items-center justify-content-center">
@@ -226,6 +262,7 @@
                   {% endif %}
                 {% endif %}
               {% endfor %}
+          {# Perform confirmation action upon button click #}
           <button class="btn btn-primary rounded-pill px-3" type="confirm" onclick="confirmBox()">Confirm</button>
           </div>
         </div>
@@ -233,5 +270,9 @@
     {% endif %}
     {% endif %}
     {% endwith %}
+    <script>
+    // Initial rendering of timeslots upon first load of page
+    renderTimeslots('{{ date }}', {{ timeslots | tojson }}, {{ busy_today | tojson }});
+    </script>
 </main>
 {% endblock content %}
