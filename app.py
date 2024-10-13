@@ -325,28 +325,27 @@ def contact_page():
 
 
 # Route To Member Page
-@app.route("/member", methods=['GET', 'POST'])
+@app.route("/member", methods=['GET'])
 def member_page():
-
     user = session.get('user')
     if request.method == 'GET':
         user = session.get('user')
-        try: 
-            appointments = Appointments.query.filter_by(customer_id=user['id']).all()
-            print(appointments[0].appointment_date, appointments[0].appointment_time, appointments[0].confirmed)
-        except Exception as e:
-            print(e)
-            flash('Error Fetching Appointments', 'danger')
-            return redirect(url_for('member_page'))
-        
         if user:
-            return render_template("/pages/member.jinja", year=year, user=user, appointments=appointments, current_date=datetime.now())
+            try: 
+                appointments = Appointments.query.filter_by(customer_id=user['id']).all()
+                if appointments:
+                    print(appointments[0].appointment_date, appointments[0].appointment_time, appointments[0].confirmed)
+                    return render_template("/pages/member.jinja", year=year, user=user, appointments=appointments, current_date=datetime.now())
+                else:
+                    flash('No Appointments Found', 'danger')
+                    return render_template("/pages/member.jinja", year=year, user=user)
+            except Exception as e:
+                print(e)
+                flash('Error Fetching Appointments', 'danger')
+                return redirect(url_for('member_page'))
         else:
             return redirect(url_for('login_page'))
         
-    elif request.method == 'POST':
-        #TODO Write code for post method on member page, perhaps allow password change right there.
-        return redirect(url_for('member_page'))
 #endregion Basic Routes
 
 #region Route User Registration/Login/Reset/Delete
@@ -630,12 +629,31 @@ def schedule_page():
             db.session.add(appt)
             db.session.commit()
             flash('Appointment Request Sent', 'success')
-            return redirect(url_for('schedule_page'))
+            return redirect(url_for('member_page'))
         except Exception as e:
             print(e)
             db.session.rollback()
             flash('Error Scheduling Appointment', 'danger')
             return redirect(url_for('member_page'))
+        
+# Route to appointments page
+@app.route("/appointments", methods=['GET', 'POST'])
+def appointments_page():
+    user = session.get('user')
+    if request.method == 'GET':
+        if user:
+            try:
+                appointments = Appointments.query.filter_by(customer_id=user['id']).all()
+                return render_template("/pages/appointments.jinja", year=year, user=user, appointments=appointments)
+            except Exception as e:
+                print(e)
+                flash('Error Fetching Appointments', 'danger')
+                return redirect(url_for('member_page'))
+        else:
+            return redirect(url_for('login_page'))
+    elif request.method == 'POST':
+        appointment_id = request.form['appointment_id']
+        return redirect(url_for('member_page'))
     
         
 #region Google Auth Routes
