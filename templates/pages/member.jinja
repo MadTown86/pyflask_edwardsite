@@ -27,25 +27,27 @@
       {% endif %}
      {% endfor %}
      {% endwith%}
-    <p>
         <form class="mb-5" method="get" action="/logout">
       <button class="btn btn-secondary w-15 my-2 py-2" type="submit" name="logout_btn" formaction="/logout">Logout</button>  
         </form>
-    </p>
     <p><h3>Account Settings:</h3><hr></p>
+    <div class="container">
+        <div class="row">
     {% if user.user_type != 'google' %}
-    <p>
-      <form class="mb-5" method="get" action="/reset">
-    <button class="btn btn-primary w-15 my-2 py-2" type="submit" name="update_btn" formaction="/reset">Update Password</button>
-      </form>
-    </p>
+      
+        <div class="col">
+          <form class="mb-5" method="get" action="/reset">
+            <button class="btn btn-primary w-15 my-2 py-2" type="submit" name="update_btn" formaction="/reset">Update Password</button>
+          </form>
+        </div>
     {% endif %}
-
-    <p>
-        <form class="mb-5" method="get" action="/delete">
-      <button class="btn btn-danger w-15 my-2 py-2" type="submit" name="delete_btn" formaction="/delete">Delete Account</button>
-        </form>
-    </p>
+        <div class="col">
+          <form class="mb-5" method="get" action="/delete">
+            <button class="btn btn-danger w-15 my-2 py-2" type="submit" name="delete_btn" formaction="/delete">Delete Account</button>
+          </form>
+        </div>
+      </div>   
+    </div>
     <p><h3>Scheduling:</h3><hr></p>
     <p>
     {% if appointments %}

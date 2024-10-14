@@ -644,7 +644,15 @@ def appointments_page():
         if user:
             try:
                 appointments = Appointments.query.filter_by(customer_id=user['id']).all()
-                return render_template("/pages/appointments.jinja", year=year, user=user, appointments=appointments)
+                for appointment in appointments:
+                    if appointment.appointment_date < datetime.now():
+                        db.session.delete(appointment)
+                        db.session.commit()
+                    elif appointment.appointment_date == datetime.now() and datetime.date(appointment.appointment_time) < datetime.now():
+                        db.session.delete(appointment)
+                        db.session.commit()
+                    else:
+                        return render_template("/pages/appointments.jinja", year=year, user=user, appointments=appointments)
             except Exception as e:
                 print(e)
                 flash('Error Fetching Appointments', 'danger')
