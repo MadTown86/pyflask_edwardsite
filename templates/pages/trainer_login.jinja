@@ -1,0 +1,81 @@
+{% extends "./base.jinja" %}
+{% block content %}
+<div id="fb-root"></div>
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v21.0&appId=873118664153188"></script>
+<script>
+    document.getElementById('login_nav').classList.add('active')
+    document.getElementById('login_nav').classList.add('text-light')
+</script>
+<meta name="google-signin-client_id" content="422364261021-6co59ivuvg2ccu3rt8tjjfr14ihi3geo.apps.googleusercontent.com">
+
+<style>
+        .nav {--bs-nav-link-color: "#fff";}
+</style>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+
+<body id="login_body">   
+  
+<main class="form-signin w-50 m-auto">
+  <form class="mb-5" method="post" action="/trainer_page">
+    <img class="mb-4" src="./static/assets/images/raw/visions_lightbg.png" alt="logo" width="100" height="100">
+    <br><hr>
+    <div><h1 class="h3 mb-3 fw-normal">Or E-mail and Password</h1></div>
+    
+    <div class="form-floating">
+      <input type="email" name="email" class="form-control" id="floatingInput" placeholder="name@example.com" style="background-image: url(&quot;chrome-extension://ibkoenhablealnikeefmjineccmgegmh/src/images/icons/icon-32-i.png&quot;) !important; background-position: calc(99% - 12px) 50% !important; background-size: 16px 16px !important; background-repeat: no-repeat !important; transition: background-position 0s ease 0s, background-size 0s ease 0s !important; cursor: default;">
+      <label for="floatingInput">Email address</label>
+    </div>
+    <div class="form-floating">
+      <input type="password" name="password" class="form-control" id="floatingPassword" placeholder="Password" style="background-image: url(&quot;chrome-extension://ibkoenhablealnikeefmjineccmgegmh/src/images/icons/icon-32-i.png&quot;) !important; background-position: calc(99% - 12px) 50% !important; background-size: 16px 16px !important; background-repeat: no-repeat !important; transition: background-position 0s ease 0s, background-size 0s ease 0s !important;">
+      <label for="floatingPassword">Password</label>
+    </div>
+
+    {% if messages %}
+    {% for category, message in messages %}
+      {% if category == 'danger' %}
+        <div class="alert alert-danger mt-3" role="alert">
+         {{ message }}
+        </div>
+      {% elif category == 'success' %}
+      <div class="alert alert-success mt-3" role="alert">
+        {{ message }}
+      </div>
+      {% else %}
+      <div class="alert alert-success mt-3" role="alert">
+        Error!
+      </div>
+      {% endif %}
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+      
+
+    <div class="form-check text-start my-3">
+      <a href="/trainer_reset">Forgot Pasword?</a>
+    </div>
+    <button class="btn btn-primary w-100 py-2" type="submit" name="sign_in" formmethod="post" formaction="/trainer_login">Sign in</button>
+    <hr>
+    
+  </form>
+</main>
+<script src="/static/assets/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+    
+
+<div id="sp-notification-wrapper" style="
+      bottom: 5px !important;
+      right: 5px !important;
+      width: 370px !important;
+      height: auto !important;
+      position: fixed !important;
+      resize: vertical !important;
+      overflow: auto !important;
+      overflow-x: hidden !important;
+      z-index: 2147483647 !important;
+      background: none !important;
+      clip: auto !important;
+    "></div>
+    </body>
+
+{% endblock content %}

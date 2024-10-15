@@ -199,6 +199,15 @@ class Trainers(db.Model):
     name = db.Column(db.String(255), nullable=False)
     email = db.Column(db.String(255), unique=True, nullable=False)
     phone = db.Column(db.String(255), nullable=False)
+    
+class Trainer_User(db.Model):
+    __tablename__ = 'trainer_user'
+    id = db.Column(db.Integer, primary_key=True)
+    trainer_id = db.Column(db.Integer, db.ForeignKey('trainers.id'), nullable=False)
+    name = db.Column(db.String(255), nullable=False)
+    email = db.Column(db.String(255), unique=True, nullable=False)
+    phone = db.Column(db.String(255), nullable=False)
+    password = db.Column(db.String(255), nullable=False)
 
 # MySQL Services Class
 class Services(db.Model):
@@ -222,10 +231,6 @@ class Appointments(db.Model):
     
 # with app.app_context():
 #     db.create_all()
-#     service = Services(name='Consultation', description='Consultation with a trainer', price=0.00)
-#     db.session.add(service)
-#     trainer = Trainers(name='Edward', email='unicornslayerbih@gmail.com', phone='2242874378')
-#     db.session.add(trainer)
 #     try:
 #         db.session.commit()
 #     except Exception as e:
@@ -344,6 +349,36 @@ def member_page():
                 return redirect(url_for('member_page'))
         else:
             return redirect(url_for('login_page'))
+
+# Route to Trainer Login Page
+@app.route("/trainer_login", methods=['GET', 'POST'])
+def trainer_login():
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+        try:
+            trainer = Trainer_User.query.filter_by(email=email).all()
+        except Exception as e:
+            print(e)
+            flash('Error Fetching Trainer User', 'danger')
+            return redirect(url_for('trainer_page'))
+        if not trainer:
+            flash("Trainer User Not Found or Database Error", 'danger')
+            return redirect(url_for('trainer_page'))
+        else:
+            if trainer and check_password_hash(trainer.password, password):
+                session['trainer'] = {"email":trainer.email, "id":trainer.trainer_id}
+                return render_template('pages/trainer_member.jinja', year=year, trainer=trainer)
+            else:
+                print("Failed Here")
+                flash(f'Incorrect Login Credentials', 'danger')
+                return redirect(url_for('trainer_login'))
+    if request.method == 'GET':
+        trainer = session.get('trainer')
+        if trainer:
+            return render_template('/pages/trainer_member.jinja', year=year, trainer=trainer)
+        else:
+            return render_template('/pages/trainer_login.jinja', year=year, trainer=trainer)
         
 #endregion Basic Routes
 

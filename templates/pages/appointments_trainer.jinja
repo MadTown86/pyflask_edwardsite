@@ -1,0 +1,45 @@
+{% extends "./base.jinja" %}
+{% block content %}
+
+<h1>Welcome {{ user.email }}!</h1>
+<hr>
+
+<p>Please select appointments you would like to cancel.  If you need to change the time, please cancel first and then go to the member page and click 'Schedule Consultation' to re-schedule.</p>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% for category, message in messages %}
+{% if category == 'danger' %}
+<div class="alert alert-danger mt-3" role="alert">
+  {{ message }}
+</div>
+{% else %}
+<div class="alert alert-success mt-3" role="alert">
+  {{ message }}
+</div>
+{% endif %}
+{% endfor %}
+{% endwith %}
+
+<form method="post" action="/appointments">
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th scope="col">Date</th>
+        <th scope="col">Time</th>
+        <th scope="col">Confirm</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for appointment in appointments %}
+      <tr>
+        <td>{{ appointment.appointment_date }}</td>
+        <td>{{ appointment.appointment_time }}</td>
+        <td>
+          <button class="btn btn-danger" type="submit" name="cancel" value="{{ appointment.id }}">Confirm</button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+{% endblock content %}
