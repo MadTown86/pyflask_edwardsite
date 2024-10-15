@@ -10,10 +10,22 @@
   <body id="member_body">
     <main class="form-signin w-50 m-auto">
     {% if user %}
-    <h1 class="h3 mb-3 fw-normal">Welcome {{user.email}} </h1>
+    <div class="container">
+      <div class="row justify-content-md-center">
+        <div class="col-md-auto">
+          <h1 class="h3 mb-3 fw-normal">Welcome {{user.email}} </h1>
+        </div>
+      </div>
+
     <hr>
     {% endif %}
-     <img class="mb-4" src="/static/assets/images/raw/visions_lightbg.png" alt="logo" width="100" height="100">
+    <div class="container">
+      <div class="row justify-content-md-center">
+      <div class="col-md-auto">
+        <img class="mb-4" src="/static/assets/images/raw/visions_lightbg.png" alt="logo" width="100" height="100">
+        </div>
+      </div>
+    </div>
      {% with messages = get_flashed_messages(with_categories=true)%}
      {% for category, message in messages %}
       {% if category == 'danger' %}
@@ -27,9 +39,15 @@
       {% endif %}
      {% endfor %}
      {% endwith%}
-        <form class="mb-5" method="get" action="/logout">
-      <button class="btn btn-secondary w-15 my-2 py-2" type="submit" name="logout_btn" formaction="/logout">Logout</button>  
-        </form>
+     <div class="container">
+        <div class="row justify-content-md-center">
+          <div class="col-md-auto">
+            <form class="mb-5" method="get" action="/logout">
+              <button class="btn btn-secondary w-15 my-2 py-2" type="submit" name="logout_btn" formaction="/logout">Logout</button>  
+            </form>
+          </div>
+        </div>
+     </div>
     <p><h3>Account Settings:</h3><hr></p>
     <div class="container">
         <div class="row">

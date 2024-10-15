@@ -337,7 +337,6 @@ def member_page():
                     print(appointments[0].appointment_date, appointments[0].appointment_time, appointments[0].confirmed)
                     return render_template("/pages/member.jinja", year=year, user=user, appointments=appointments, current_date=datetime.now())
                 else:
-                    flash('No Appointments Found', 'danger')
                     return render_template("/pages/member.jinja", year=year, user=user)
             except Exception as e:
                 print(e)
@@ -653,6 +652,8 @@ def appointments_page():
                         db.session.commit()
                     else:
                         return render_template("/pages/appointments.jinja", year=year, user=user, appointments=appointments)
+                else :
+                    return redirect(url_for('member_page'))
             except Exception as e:
                 print(e)
                 flash('Error Fetching Appointments', 'danger')
@@ -660,8 +661,18 @@ def appointments_page():
         else:
             return redirect(url_for('login_page'))
     elif request.method == 'POST':
-        appointment_id = request.form['appointment_id']
-        return redirect(url_for('member_page'))
+        print('\n\nRETURNED FROM APPOINTMENTS POST', request.form.get('cancel'))
+        try: 
+            appointment = Appointments.query.filter_by(id=request.form.get('cancel')).first()
+            db.session.delete(appointment)
+            db.session.commit()
+            flash('Appointment Cancelled', 'success')
+            return redirect(url_for('appointments_page'))
+        except Exception as e:
+            print(e)
+            db.session.rollback()
+            flash('Error Cancelling Appointment', 'danger')
+            return redirect(url_for('appointments_page'))
     
         
 #region Google Auth Routes
