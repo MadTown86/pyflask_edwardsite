@@ -9,11 +9,11 @@
   </style>
   <body id="member_body">
     <main class="form-signin w-50 m-auto">
-    {% if user %}
+    {% if trainer %}
     <div class="container">
       <div class="row justify-content-md-center">
         <div class="col-md-auto">
-          <h1 class="h3 mb-3 fw-normal">Welcome {{user.email}} </h1>
+          <h1 class="h3 mb-3 fw-normal">Welcome {{trainer.email}} </h1>
         </div>
       </div>
 
@@ -43,7 +43,7 @@
         <div class="row justify-content-md-center">
           <div class="col-md-auto">
             <form class="mb-5" method="get" action="/logout">
-              <button class="btn btn-secondary w-15 my-2 py-2" type="submit" name="logout_btn" formaction="/logout">Logout</button>  
+              <button class="btn btn-secondary w-15 my-2 py-2" type="submit" name="logout_btn" formaction="/logout_trainer">Logout</button>  
             </form>
           </div>
         </div>
@@ -51,13 +51,11 @@
     <p><h3>Account Settings:</h3><hr></p>
     <div class="container">
         <div class="row">
-    {% if user.user_type != 'google' %}
         <div class="col">
           <form class="mb-5" method="get" action="/reset">
             <button class="btn btn-primary w-15 my-2 py-2" type="submit" name="update_btn" formaction="/reset">Update Password</button>
           </form>
         </div>
-    {% endif %}
       </div>   
     </div>
     <p><h3>Scheduling:</h3><hr></p>

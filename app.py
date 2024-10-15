@@ -14,7 +14,7 @@ from logging.config import dictConfig
 from logging.handlers import RotatingFileHandler
 from logging.handlers import QueueHandler, QueueListener
 from flask.logging import default_handler
-from flask import has_request_context, request
+from flask import has_request_context, request, make_response
 from flask import Flask, render_template, \
 redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
@@ -349,6 +349,9 @@ def member_page():
                 return redirect(url_for('member_page'))
         else:
             return redirect(url_for('login_page'))
+#endregion Basic Routes
+
+#region Trainer Routes
 
 # Route to Trainer Login Page
 @app.route("/trainer_login", methods=['GET', 'POST'])
@@ -357,17 +360,17 @@ def trainer_login():
         email = request.form['email']
         password = request.form['password']
         try:
-            trainer = Trainer_User.query.filter_by(email=email).all()
+            trainer = Trainer_User.query.filter_by(email=email).first()
         except Exception as e:
             print(e)
             flash('Error Fetching Trainer User', 'danger')
-            return redirect(url_for('trainer_page'))
+            return redirect(url_for('trainer_login'))
         if not trainer:
             flash("Trainer User Not Found or Database Error", 'danger')
-            return redirect(url_for('trainer_page'))
+            return redirect(url_for('trainer_login'))
         else:
             if trainer and check_password_hash(trainer.password, password):
-                session['trainer'] = {"email":trainer.email, "id":trainer.trainer_id}
+                session['trainer'] = {"email":trainer.email, "trainer_id":trainer.trainer_id}
                 return render_template('pages/trainer_member.jinja', year=year, trainer=trainer)
             else:
                 print("Failed Here")
@@ -379,8 +382,28 @@ def trainer_login():
             return render_template('/pages/trainer_member.jinja', year=year, trainer=trainer)
         else:
             return render_template('/pages/trainer_login.jinja', year=year, trainer=trainer)
+
+# Route to Trainer Member Page
+@app.route("/trainer_member", methods=['GET'])
+def trainer_member():
+    if request.method == 'GET':
+        trainer = session.get('trainer')
+        if trainer:
+            try: 
+                appointments = Appointments.query.filter_by(trainer_id=trainer['trainer_id']).all()
+                if appointments:
+                    print(appointments[0].appointment_date, appointments[0].appointment_time, appointments[0].confirmed)
+                    return render_template("/pages/trainer_member.jinja", year=year, trainer=trainer, appointments=appointments, current_date=datetime.now())
+                else:
+                    return render_template("/pages/trainer_member.jinja", year=year, user=trainer)
+            except Exception as e:
+                print(e)
+                flash('Error Fetching Appointments', 'danger')
+                return redirect(url_for('trainer_member'))
+        else:
+            return redirect(url_for('trainer_login'))
         
-#endregion Basic Routes
+#endregion Trainer Routes
 
 #region Route User Registration/Login/Reset/Delete
 # Route To Reset Request Page
@@ -817,6 +840,17 @@ def rewrite_credentials():
 @app.route("/logout")
 def logout():
     session.pop('user', None)
+    session.clear()
+    response = make_response(redirect(url_for('login_page')))
+    response.delete_cookie('session')
+    return redirect(url_for('index_page'))
+
+@app.route("/logout_trainer")
+def logout_trainer():
+    session.pop('trainer', None)
+    session.clear()
+    response = make_response(redirect(url_for('trainer_login')))
+    response.delete_cookie('session')
     return redirect(url_for('index_page'))
 
 #region Testing Routes
