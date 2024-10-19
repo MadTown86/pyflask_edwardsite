@@ -1,0 +1,77 @@
+{% extends "./base.jinja" %}
+{% block content %}
+<script>
+    function check() {
+       if (document.getElementById('floatingPassword').value ==
+           document.getElementById('floatingPassword_verify').value 
+         && document.getElementById('floatingPassword').value.length > 0){
+           document.getElementById('floatingPassword').style.borderColor = 'green';
+           document.getElementById('floatingPassword_verify').style.borderColor = 'green';
+           document.getElementById('message').style.color = 'green';
+           document.getElementById('message').innerHTML = 'Passwords Match!';
+           document.getElementById('register_submit').removeAttribute('disabled');
+       } else {
+           document.getElementById('floatingPassword').style.borderColor = 'red';
+           document.getElementById('floatingPassword_verify').style.borderColor = 'red';
+               document.getElementById('message').style.color = 'red';
+           document.getElementById('message').innerHTML = 'Passwords Do Not Match!';
+           document.getElementById('register_submit').setAttribute('disabled', 'True');
+       }
+        
+   }
+
+ </script>
+ {% if user != none %}
+ <h1 style="text-align:center;">Hi Trainer: {{user.email}}</h1>
+
+ <article class="my-3 w-50 m-auto" id="floating-labels">
+     <div class="bd-heading sticky-xl-top align-self-start mt-5 mb-3 mt-xl-0 mb-xl-2">
+       <h3>Password Reset</h3>
+       <div class="bd-example-snippet bd-code-snippet">
+    <div class="bd-example m-0 border-0">
+       <form method="POST" action="/reset_trainer">
+         <div class="form-floating w-50 mb-3">
+          <input type="hidden" name="email" class="form-control" id="usernameset" required="True" style="background-image: url(&quot;chrome-extension://ibkoenhablealnikeefmjineccmgegmh/src/images/icons/icon-32.png&quot;) !important; background-position: calc(99% - 12px) 50% !important; background-size: 16px 16px !important; background-repeat: no-repeat !important; transition: background-position 0s ease 0s, background-size 0s ease 0s !important;">
+         </div>
+         <div class="form-floating w-50 mb-3">
+           <input type="password" name="password_register" class="form-control" id="floatingPassword" required="True" onkeyup='check();' placeholder="Password" style="background-image: url(&quot;chrome-extension://ibkoenhablealnikeefmjineccmgegmh/src/images/icons/icon-32.png&quot;) !important; background-position: calc(99% - 12px) 50% !important; background-size: 16px 16px !important; background-repeat: no-repeat !important; transition: background-position 0s ease 0s, background-size 0s ease 0s !important;">
+           <label for="floatingPassword">Password</label>
+         </div>
+         <div class="form-floating w-50 mb-3">
+             <input type="password" name="password_reset_verify" class="form-control my-4" id="floatingPassword_verify" required="True" onkeyup='check();' placeholder="Password" style="background-image: url(&quot;chrome-extension://ibkoenhablealnikeefmjineccmgegmh/src/images/icons/icon-32.png&quot;) !important; background-position: calc(99% - 12px) 50% !important; background-size: 16px 16px !important; background-repeat: no-repeat !important; transition: background-position 0s ease 0s, background-size 0s ease 0s !important;">
+             <label for="floatingPassword">Confirm Password</label>
+             <span id="message"></span>
+           </div>
+            <button type="submit" id="register_submit" class="btn btn-primary">Submit</button>
+       <article class="my-5" id="validation">
+         <div>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  {% if category == 'danger' %}
+                  <div class="alert alert-danger mt-3" role="alert">
+                        {{ error_message }} 
+                  </div>
+                  {% else %}
+                  <div class="alert alert-success mt-3" role="alert">
+                    Password Changed Successfully
+                  </div>
+                  {% endif %}
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+           </form>
+     </div>
+   </div>
+   
+         </div>
+       </article>
+ </div>
+ </div>
+ 
+     </div>
+   </article> 
+  {% else %}
+  <h1 style="text-align:center;">Error - No User Defined Contact Site Admin</h1>
+{% endif %}
+ {% endblock content %}

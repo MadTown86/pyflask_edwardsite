@@ -35,7 +35,7 @@ load_dotenv("vars\\.env")
 #region Configuration
 # Config Logging
 
-logging.basicConfig()
+# logging.basicConfig(filename='./vars/app.log', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
 logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
 # dictConfig({
@@ -71,31 +71,31 @@ formatter = RequestFormatter(
 )
 
 # Logging Queue
-# log_queue = Queue()
-# queue_handler = QueueHandler(log_queue)
+log_queue = Queue()
+queue_handler = QueueHandler(log_queue)
 
 # Logging Handlers
-# debug_handler = RotatingFileHandler(os.getenv("FILE_HANDLER_LOCATION"), maxBytes=10000, backupCount=1)
-# debug_handler.setLevel(logging.DEBUG)
-# debug_handler.setFormatter(formatter)
-# listener = QueueListener(log_queue, debug_handler)
+debug_handler = RotatingFileHandler(os.getenv("FILE_HANDLER_LOCATION"), maxBytes=10000, backupCount=1)
+debug_handler.setLevel(logging.DEBUG)
+debug_handler.setFormatter(formatter)
+listener = QueueListener(log_queue, debug_handler)
 
-# request_db_handler = RotatingFileHandler(os.getenv("REQUEST_HANDLER_LOCATION"), maxBytes=10000, backupCount=1)
-# request_db_handler.setLevel(logging.INFO)
-# request_db_handler.setFormatter(formatter)
-# listener_db = QueueListener(log_queue, request_db_handler)
+request_db_handler = RotatingFileHandler(os.getenv("REQUEST_HANDLER_LOCATION"), maxBytes=10000, backupCount=1)
+request_db_handler.setLevel(logging.INFO)
+request_db_handler.setFormatter(formatter)
+listener_db = QueueListener(log_queue, request_db_handler)
 
 # Create Flask App
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY")
 
 # Add Handler to App Logger
-# app.logger.addHandler(debug_handler)
-# app.logger.addHandler(request_db_handler)
-# app.logger.addHandler(queue_handler)
-# app.logger.info("Application Started")
-# listener.start()
-# listener_db.start()
+app.logger.addHandler(debug_handler)
+app.logger.addHandler(request_db_handler)
+app.logger.addHandler(queue_handler)
+app.logger.info("Application Started")
+listener.start()
+listener_db.start()
 
 if not app.debug:
     mail_handler = SMTPHandler(
@@ -228,6 +228,16 @@ class Appointments(db.Model):
     appointment_time = db.Column(db.Time, nullable=False)
     confirmed = db.Column(db.Boolean, default=False)
     db.UniqueConstraint('trainer_id', 'appointment_date', 'appointment_time', name='unique_appointment')
+
+# MySQL Trainer Reset Class
+class Trainer_Reset(db.Model):
+    __tablename__ = 'trainer_reset'
+    id = db.Column(db.Integer, primary_key=True)
+    trainer_id = db.Column(db.Integer, db.ForeignKey('trainers.id'), nullable=False)
+    reset_token = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"))
+    expires_at = db.Column(db.DateTime, default=(datetime.now(timezone.utc) + timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S"))
+
     
 # with app.app_context():
 #     db.create_all()
@@ -382,6 +392,97 @@ def trainer_login():
             return render_template('/pages/trainer_member.jinja', year=year, trainer=trainer)
         else:
             return render_template('/pages/trainer_login.jinja', year=year, trainer=trainer)
+        
+# Route to Trainer Reset Password Page From Trainer Member
+@app.route("/trainer_reset", methods=['GET', 'POST'])
+def trainer_reset():
+    if request.method == 'GET':
+        if session.get('trainer'):
+            return render_template('/pages/trainer_reset.jinja', year=year)
+        else:
+            return redirect(url_for('trainer_login'))
+    if request.method == 'POST':
+        trainer = session.get('trainer')
+        trainer_data = Trainer_User.query.filter_by(email=trainer['email']).first()
+        if not trainer_data:
+            flash('Trainer Not Found', 'danger')
+            return redirect(url_for('trainer_reset'))
+        else:
+            try:
+                password = request.form['password_reset_verify']
+                trainer_data.password = generate_password_hash(password)
+                db.session.add(trainer_data)
+                db.session.commit()
+                flash('Password Reset Successful', 'success')
+                return redirect(url_for('trainer_login'))
+            except Exception as e:
+                print("Database Exception When Resetting Password", e.orig, e.params)
+                db.session.rollback()
+                flash('Password Reset Failed - Contact Site Administrator', 'danger')
+                return redirect(url_for('trainer_reset'))
+            
+# Route to Trainer Reset Request Page
+@app.route("/trainer_reset_request", methods=['GET', 'POST'])
+def trainer_reset_request():
+    if session.get('trainer'):
+        return redirect(url_for('trainer_member'))
+    else:
+        if request.method == 'GET':
+            return render_template("/pages/trainer_reset_request.jinja", year=year)
+        elif request.method == 'POST':
+            try:
+                trainer_email = request.form['email_reset_password']
+                trainer = Trainer_User.query.filter_by(email=trainer_email).first()
+                if not trainer:
+                    flash('Trainer Not Found', 'danger')
+                    return redirect(url_for('trainer_reset_request'))
+                else:
+                    reset_code = os.urandom(16).hex()
+                    try:
+                        msg = Message(subject="Reset Request - Visions.Fit", \
+                                    body=f'Dear Trainer:\nPlease click the link below to reset your password:\n', html=f'<html><p>Dear Trainer:</p><p>Please click the link below to reset your password:</p><p><a href="www.visions.fit/trainer_email_reset/{reset_code}">click here</a></p></html>', \
+                                        recipients=[trainer_email])
+                        print(msg)
+                        reset_request = Trainer_Reset(trainer_id=trainer.trainer_id, reset_token=reset_code)
+                        db.session.add(reset_request)
+                        db.session.commit()
+                        print("sending mail")
+                        with mail.connect() as conn:
+                            conn.send(msg)
+                        print("mail sent")
+                        flash('Reset Email Sent', 'success')
+                        return redirect(url_for('trainer_reset_request'))
+                    except Exception as e:
+                        print(e)
+                        db.session.rollback()
+                        flash('Reset Email Failed - Error In Sending Mail', 'danger')
+                        return redirect(url_for('trainer_reset_request'))
+            except Exception as e:
+                print(e)
+                flash('Reset Email Failed', 'danger')
+                return redirect(url_for('trainer_reset_request'))
+            
+# Route to Trainer Reset Password Page From Email
+@app.route("/trainer_email_reset/<reset_code>", methods=['GET'])
+def trainer_email_reset(reset_code):
+    reset_code = reset_code
+    print(reset_code)
+    if request.method == 'GET':
+        try:
+            trainer_reference = Trainer_Reset.query.filter_by(reset_token=reset_code).first()
+            print(trainer_reference.trainer_id, trainer_reference.expires_at, trainer_reference.created_at)
+            if trainer_reference.expires_at < datetime.utcnow():
+                flash('Reset Request Expired', 'danger')
+                return redirect(url_for('trainer_reset'))
+            else:
+                trainer = Trainer_User.query.filter_by(trainer_id=trainer_reference.trainer_id).first()
+                session['trainer'] = {'email':trainer.email, 'trainer_id':trainer.trainer_id}
+                return render_template("/pages/trainer_reset.jinja", year=year, trainer=trainer)
+        except Exception as e:
+            print(e)
+            flash('Reset Request Not Found', 'danger')  
+            return redirect(url_for('trainer_reset'))
+            
 
 # Route to Trainer Member Page
 @app.route("/trainer_member", methods=['GET'])

@@ -1,0 +1,93 @@
+{% extends "base.jinja" %}
+{% block content %}
+<script>
+  function check() {
+    if (document.getElementById('floatingPassword').value ==
+      document.getElementById('floatingPassword_verify').value
+      && document.getElementById('floatingPassword').value.length > 0) {
+      document.getElementById('floatingPassword').style.borderColor = 'green';
+      document.getElementById('floatingPassword_verify').style.borderColor = 'green';
+      document.getElementById('message').style.color = 'green';
+      document.getElementById('message').innerHTML = 'Passwords Match!';
+      document.getElementById('register_submit').removeAttribute('disabled');
+    } else {
+      document.getElementById('floatingPassword').style.borderColor = 'red';
+      document.getElementById('floatingPassword_verify').style.borderColor = 'red';
+      document.getElementById('message').style.color = 'red';
+      document.getElementById('message').innerHTML = 'Passwords Do Not Match!';
+      document.getElementById('register_submit').setAttribute('disabled', 'True');
+    }
+  }
+</script>
+<article class="my-3 w-50 m-auto" id="floating-labels">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        {% if category == 'success' %}
+          <h1 style="align-content: center">{{message}}</h1>
+        {% else %}
+          <div class="bd-heading sticky-xl-top align-self-start mt-5 mb-3 mt-xl-0 mb-xl-2"></div>
+          <h3>Password Reset</h3>
+          <div class="bd-example-snippet bd-code-snippet">
+            <div class="bd-example m-0 border-0">
+
+              <form method="post" action="/reset_request_trainer">
+                <div class="form-floating w-50 mb-3">
+                  <input type="email" name="email_reset_password" class="form-control" id="floatingPassword" required="True"
+                    onkeyup='check();' placeholder="Password"
+                    style="background-image: url(&quot;chrome-extension://ibkoenhablealnikeefmjineccmgegmh/src/images/icons/icon-32.png&quot;) !important; background-position: calc(99% - 12px) 50% !important; background-size: 16px 16px !important; background-repeat: no-repeat !important; transition: background-position 0s ease 0s, background-size 0s ease 0s !important;">
+                  <label for="floatingPassword">Email Address - Username</label>
+                </div>
+                <button class="btn btn-secondary w-15 my-2 py-2" type="submit" name="reset_request_btn" formmethod="post"
+                  formaction="/reset_request_trainer">Submit</button>
+                <article class="my-5" id="validation">
+                  <div>
+                    {% if category == 'danger' %}
+                    <div class="alert alert-danger mt-3" role="alert">
+                      {{ message }}
+                    </div>
+                    {% endif %}
+                  </div>
+                  </article>
+              </form>
+            </div>
+          </div>
+        {% endif %}
+        {% endfor %}
+    {% else %}  
+        <div class="bd-heading sticky-xl-top align-self-start mt-5 mb-3 mt-xl-0 mb-xl-2"></div>
+        <h3>Password Reset</h3>
+        <div class="bd-example-snippet bd-code-snippet">
+          <div class="bd-example m-0 border-0">
+
+            <form method="post" action="/reset_request_trainer">
+              <div class="form-floating w-50 mb-3">
+                <input type="email" name="email_reset_password" class="form-control" id="floatingPassword" required="True"
+                  onkeyup='check();' placeholder="Password"
+                  style="background-image: url(&quot;chrome-extension://ibkoenhablealnikeefmjineccmgegmh/src/images/icons/icon-32.png&quot;) !important; background-position: calc(99% - 12px) 50% !important; background-size: 16px 16px !important; background-repeat: no-repeat !important; transition: background-position 0s ease 0s, background-size 0s ease 0s !important;">
+                <label for="floatingPassword">Email Address - Username</label>
+              </div>
+              <button class="btn btn-secondary w-15 my-2 py-2" type="submit" name="reset_request_btn" formmethod="post"
+                formaction="/reset_request_trainer">Submit</button>
+              <article class="my-5" id="validation">
+                <div>
+                  {% if category == 'danger' %}
+                  <div class="alert alert-danger mt-3" role="alert">
+                    {{ message }}
+                  </div>
+                  {% endif %}
+            </form>
+          </div>
+        </div>
+        </div>
+        </article>
+     {% endif %}
+{% endwith %}
+</div>
+</article>
+</div>
+</div>
+
+</div>
+</article>
+{% endblock content %}
