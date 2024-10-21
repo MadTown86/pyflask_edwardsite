@@ -31,7 +31,7 @@
           <div class="bd-example-snippet bd-code-snippet">
             <div class="bd-example m-0 border-0">
 
-              <form method="post" action="/reset_request_trainer">
+              <form method="post" action="/trainer_reset_request">
                 <div class="form-floating w-50 mb-3">
                   <input type="email" name="email_reset_password" class="form-control" id="floatingPassword" required="True"
                     onkeyup='check();' placeholder="Password"
@@ -39,7 +39,7 @@
                   <label for="floatingPassword">Email Address - Username</label>
                 </div>
                 <button class="btn btn-secondary w-15 my-2 py-2" type="submit" name="reset_request_btn" formmethod="post"
-                  formaction="/reset_request_trainer">Submit</button>
+                  formaction="/trainer_reset_request">Submit</button>
                 <article class="my-5" id="validation">
                   <div>
                     {% if category == 'danger' %}
@@ -60,7 +60,7 @@
         <div class="bd-example-snippet bd-code-snippet">
           <div class="bd-example m-0 border-0">
 
-            <form method="post" action="/reset_request_trainer">
+            <form method="post" action="/trainer_reset_request">
               <div class="form-floating w-50 mb-3">
                 <input type="email" name="email_reset_password" class="form-control" id="floatingPassword" required="True"
                   onkeyup='check();' placeholder="Password"
@@ -68,7 +68,7 @@
                 <label for="floatingPassword">Email Address - Username</label>
               </div>
               <button class="btn btn-secondary w-15 my-2 py-2" type="submit" name="reset_request_btn" formmethod="post"
-                formaction="/reset_request_trainer">Submit</button>
+                formaction="/trainer_reset_request">Submit</button>
               <article class="my-5" id="validation">
                 <div>
                   {% if category == 'danger' %}

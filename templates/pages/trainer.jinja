@@ -1,4 +1,4 @@
-{% extends "./base.html" %}
+{% extends "./base.jinja" %}
 {% block content %}
   <script>
     document.getElementById('member_nav').classList.add('active')
@@ -8,23 +8,20 @@
     .nav {--bs-nav-link-color: "#fff";}
   </style>
     <main>
-    <form class="text-center align-top">
-        <h3 class="mb-1 fw-normal text-center align-top">Hello, <%= locals.username %>!</h3>
+    <form class="text-center align-top" method="post" action="trainer">
+        <h3 class="mb-1 fw-normal text-center align-top">Hello, {{user.email}}!</h3>
         <hr>
         <br>
         <h3 class="mb-3 fw-normal text-center align-top">Select The Trainer To See Available Appointments</h3>
     <div class="btn-group my-1 text-top" role="group" aria-label="Basic radio toggle button group">
-        <input type="radio" class="btn-check" name="btnradio" id="btnradio1" autocomplete="off" checked>
+        <input type="radio" class="btn-check" name="btnradio" id="btnradio1" value="1" autocomplete="off" checked>
         <label class="btn btn-outline-primary" for="btnradio1">Edward</label>
       
-        <input type="radio" class="btn-check" name="btnradio" id="btnradio2" autocomplete="off">
-        <label class="btn btn-outline-primary" for="btnradio2">Trainer Two</label>
-      
-        <input type="radio" class="btn-check" name="btnradio" id="btnradio3" autocomplete="off">
-        <label class="btn btn-outline-primary" for="btnradio3">Trainer Three</label>
+        <input type="radio" class="btn-check" name="btnradio" id="btnradio2" value="2" autocomplete="off">
+        <label class="btn btn-outline-primary" for="btnradio2">Grover</label>
     </div>
       <div>
-        <button class="btn btn-primary w-15 my-2 py-2" type="submit" name="submit_btn" formaction="/schedule">Submit</button>
+        <button class="btn btn-primary w-15 my-2 py-2" type="submit" name="submit_btn" formmethod='post' formaction="/trainer">Submit</button>
       </div>
     </form>
     </main>  

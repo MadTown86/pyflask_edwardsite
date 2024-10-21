@@ -21,15 +21,15 @@
    }
 
  </script>
- {% if user != none %}
- <h1 style="text-align:center;">Hi Trainer: {{user.email}}</h1>
+ {% if trainer != none %}
+ <h1 style="text-align:center;">Hi Trainer: {{trainer.email}}</h1>
 
  <article class="my-3 w-50 m-auto" id="floating-labels">
      <div class="bd-heading sticky-xl-top align-self-start mt-5 mb-3 mt-xl-0 mb-xl-2">
        <h3>Password Reset</h3>
        <div class="bd-example-snippet bd-code-snippet">
     <div class="bd-example m-0 border-0">
-       <form method="POST" action="/reset_trainer">
+       <form method="POST" action="/trainer_reset">
          <div class="form-floating w-50 mb-3">
           <input type="hidden" name="email" class="form-control" id="usernameset" required="True" style="background-image: url(&quot;chrome-extension://ibkoenhablealnikeefmjineccmgegmh/src/images/icons/icon-32.png&quot;) !important; background-position: calc(99% - 12px) 50% !important; background-size: 16px 16px !important; background-repeat: no-repeat !important; transition: background-position 0s ease 0s, background-size 0s ease 0s !important;">
          </div>
@@ -72,6 +72,6 @@
      </div>
    </article> 
   {% else %}
-  <h1 style="text-align:center;">Error - No User Defined Contact Site Admin</h1>
+  <h1 style="text-align:center;">Error - No Trainer Defined Contact Site Admin</h1>
 {% endif %}
  {% endblock content %}

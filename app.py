@@ -338,6 +338,27 @@ def contact_page():
             flash('Internal Error - Please Try Again Later', 'danger')
             return redirect(url_for('contact_page'))
 
+# Route to Display Trainer Page for Scheduling
+@app.route("/trainer", methods=['GET', 'POST'])
+def trainer_page():
+    user = session.get('user')
+    if not user:
+        return redirect(url_for('login_page'))
+    else:
+        if request.method == 'GET':
+            try:
+                trainers = Trainers.query.all()
+                return render_template("/pages/trainer.jinja", year=year, user=user, trainers=trainers)
+            except Exception as e:
+                print(e)
+                flash('Error Fetching Trainers', 'danger')
+                return redirect(url_for('trainer_page'))
+            
+        if request.method == 'POST':
+            trainer = request.form['btnradio']
+            print(trainer)
+            return render_template("/pages/schedule.jinja", year=year, user=user, trainer=trainer)
+
 
 # Route To Member Page
 @app.route("/member", methods=['GET'])
@@ -396,9 +417,10 @@ def trainer_login():
 # Route to Trainer Reset Password Page From Trainer Member
 @app.route("/trainer_reset", methods=['GET', 'POST'])
 def trainer_reset():
+    trainer = session.get('trainer')
     if request.method == 'GET':
-        if session.get('trainer'):
-            return render_template('/pages/trainer_reset.jinja', year=year)
+        if trainer:
+            return render_template('/pages/trainer_reset.jinja', year=year, trainer=trainer)
         else:
             return redirect(url_for('trainer_login'))
     if request.method == 'POST':
@@ -428,11 +450,12 @@ def trainer_reset_request():
         return redirect(url_for('trainer_member'))
     else:
         if request.method == 'GET':
-            return render_template("/pages/trainer_reset_request.jinja", year=year)
+            return render_template("/pages/trainer_request_reset.jinja", year=year)
         elif request.method == 'POST':
             try:
                 trainer_email = request.form['email_reset_password']
                 trainer = Trainer_User.query.filter_by(email=trainer_email).first()
+                print("\n\n", trainer_email, trainer)
                 if not trainer:
                     flash('Trainer Not Found', 'danger')
                     return redirect(url_for('trainer_reset_request'))
