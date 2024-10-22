@@ -75,10 +75,10 @@ log_queue = Queue()
 queue_handler = QueueHandler(log_queue)
 
 # Logging Handlers
-debug_handler = RotatingFileHandler(os.getenv("FILE_HANDLER_LOCATION"), maxBytes=10000, backupCount=1)
-debug_handler.setLevel(logging.DEBUG)
-debug_handler.setFormatter(formatter)
-listener = QueueListener(log_queue, debug_handler)
+error_handler = RotatingFileHandler(os.getenv("FILE_HANDLER_LOCATION"), maxBytes=10000, backupCount=1)
+error_handler.setLevel(logging.ERROR)
+error_handler.setFormatter(formatter)
+listener = QueueListener(log_queue, error_handler)
 
 request_db_handler = RotatingFileHandler(os.getenv("REQUEST_HANDLER_LOCATION"), maxBytes=10000, backupCount=1)
 request_db_handler.setLevel(logging.INFO)
@@ -90,7 +90,7 @@ app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY")
 
 # Add Handler to App Logger
-app.logger.addHandler(debug_handler)
+app.logger.addHandler(error_handler)
 app.logger.addHandler(request_db_handler)
 app.logger.addHandler(queue_handler)
 app.logger.info("Application Started")
@@ -355,9 +355,8 @@ def trainer_page():
                 return redirect(url_for('trainer_page'))
             
         if request.method == 'POST':
-            trainer = request.form['btnradio']
-            print(trainer)
-            return render_template("/pages/schedule.jinja", year=year, user=user, trainer=trainer)
+            trainer_id = request.form['btnradio']
+            return redirect(url_for('schedule_page', trainer=trainer_id))
 
 
 # Route To Member Page
@@ -753,70 +752,79 @@ def delete_page():
 #endregion
 
 # Route To Schedule Page
-@app.route("/schedule", methods=['GET', 'POST'])
-def schedule_page():
-    #TODO Need to gray out same-day appointments that are already past the current time
-    #TODO Need to figure out why confirmation of appointment does not show up in member page right after scheduling
-    #TODO Need to add a limit to amount of appointments one can schedule at a time
-    #TODO Need to add secondary list for confirmed appointments and for past appointments
-    date = datetime.now().strftime("%m/%d/%Y")
-    datefmtinput = '%m/%d/%Y %H:%M:%S'
-    datefmtoutput = '%I:%M %p'
-    datefmtreq = '%m/%d/%Y %I:%M %p'
-    justdate = '%m/%d/%Y'
-    timeslots = ['09:00:00', '10:00:00', '11:00:00', '12:00:00', '13:00:00', '14:00:00', '15:00:00', '16:00:00', '17:00:00']
-    for i in range(len(timeslots)):
-        timeslots[i] = datetime.strptime(date + ' ' + timeslots[i], datefmtinput).strftime(datefmtoutput)
+@app.route("/schedule/<trainer>", methods=['GET', 'POST'])
+def schedule_page(trainer):
+    #TODO - Alter flow to JUST send appointments and determine if dates/appointment dates align via javascript in .jinja file
     user = session.get('user')
-    if request.method == 'GET':
-        try:
-            # Fetch Appointments
-            #TODO Filter By Trainer and Pull Less Information
-            appointments = Appointments.query.group_by(Appointments.appointment_date).all()
-            db.session.close()
-            
-            # Group Appointments By Date in DefaultDict
-            appts_by_date = defaultdict(list)
-            for appt in appointments:
-                appts_by_date[appt.appointment_date.strftime(justdate)].append(appt.appointment_time.strftime(datefmtoutput))
-            
-            # Convert DefaultDict to Python Dictionary for JSON serialization/mapping
-            appts_to_pydict = {}
-            busy_today = []
-            for key, values in appts_by_date.items():
-                appts_to_pydict[key] = values
-            for key, values in appts_by_date.items():
-                if key == date:
-                    busy_today = values
-            print(busy_today)
-            to_json = JSON.dumps(appts_to_pydict)
+    trainer_id = trainer
+    print('SCHEDULE TRAINER ID RECEIPT', trainer_id)
+    if not user:
+        return redirect(url_for('login_page'))
+    else:
+        date = datetime.now().strftime("%m/%d/%Y")
+        datefmtinput = '%m/%d/%Y %H:%M:%S'
+        datefmtoutput = '%I:%M %p'
+        datefmtreq = '%m/%d/%Y %I:%M %p'
+        justdate = '%m/%d/%Y'
+        timeslots = ['09:00:00', '10:00:00', '11:00:00', '12:00:00', '13:00:00', '14:00:00', '15:00:00', '16:00:00', '17:00:00']
+        for i in range(len(timeslots)):
+            timeslots[i] = datetime.strptime(date + ' ' + timeslots[i], datefmtinput).strftime(datefmtoutput)
 
-            # Get Appointment Dates Alone No Values
-            appointment_dates = list(appts_by_date.keys())
-            return render_template("/pages/schedule.jinja", year=year, user=user, timeslots=timeslots, date=date, appointment_dates=appointment_dates, appts_by_date=appts_by_date, json_appts=to_json, busy_today=busy_today)
-        except Exception as e:
-            print(e)
-            flash('Error Fetching Appointments', 'danger')
-            return redirect(url_for('member_page'))
-        
-    elif request.method == 'POST':
-        data = request.get_json()
-        date_post = data['date']
-        time = data['time']
-        appt_request = datetime.strptime(date_post + ' ' + time, datefmtreq)
-        print(appt_request)
-        try:
-            appt = Appointments(trainer_id=1, service_id=1, customer_id=user['id'], appointment_date=appt_request, appointment_time=appt_request.time())
-            db.session.add(appt)
-            db.session.commit()
-            flash('Appointment Request Sent', 'success')
-            return redirect(url_for('member_page'))
-        except Exception as e:
-            print(e)
-            db.session.rollback()
-            flash('Error Scheduling Appointment', 'danger')
-            return redirect(url_for('member_page'))
-        
+        if request.method == 'GET':
+            try:
+                # Fetch Trainer Name
+                trainer = Trainers.query.filter_by(id=trainer_id).first()
+                
+                # Fetch Appointments
+                #TODO Filter By Trainer and Pull Less Information
+                appointments = Appointments.query.filter_by(trainer_id=trainer_id).group_by(Appointments.appointment_date).all()
+                db.session.close()
+                
+                # Group Appointments By Date in DefaultDict
+                appts_by_date = defaultdict(list)
+                for appt in appointments:
+                    appts_by_date[appt.appointment_date.strftime(justdate)].append(appt.appointment_time.strftime(datefmtoutput))
+                
+                # Convert DefaultDict to Python Dictionary for JSON serialization/mapping
+                appts_to_pydict = {}
+                busy_today = []
+                for key, values in appts_by_date.items():
+                    appts_to_pydict[key] = values
+                for key, values in appts_by_date.items():
+                    if key == date:
+                        busy_today = values
+                print("List of Busy_Today Appointments:", busy_today)
+                to_json = JSON.dumps(appts_to_pydict)
+                
+                print("List of all appointments", appts_to_pydict)
+
+                # Get Appointment Dates Alone No Values
+                appointment_dates = list(appts_by_date.keys())
+                return render_template("/pages/schedule.jinja", year=year, user=user, timeslots=timeslots, date=date, appointment_dates=appointment_dates, appts_by_date=appts_by_date, json_appts=to_json, busy_today=busy_today, trainer=trainer)
+            except Exception as e:
+                print(e)
+                flash('Error Fetching Appointments', 'danger')
+                return redirect(url_for('member_page'))
+            
+        elif request.method == 'POST':
+            data = request.get_json()
+            app.logger.info('DATA RECEIVED FROM POST REQUEST: %s', data)
+            date_post = data['date']
+            time = data['time']
+            appt_request = datetime.strptime(date_post + ' ' + time, datefmtreq)
+            print(appt_request)
+            try:
+                appt = Appointments(trainer_id=2, service_id=1, customer_id=user['id'], appointment_date=appt_request, appointment_time=appt_request.time())
+                db.session.add(appt)
+                db.session.commit()
+                flash('Appointment Request Sent', 'success')
+                return redirect(url_for('member_page'))
+            except Exception as e:
+                print(e)
+                db.session.rollback()
+                flash('Error Scheduling Appointment', 'danger')
+                return redirect(url_for('member_page'))
+            
 # Route to appointments page
 @app.route("/appointments", methods=['GET', 'POST'])
 def appointments_page():
@@ -855,7 +863,7 @@ def appointments_page():
             db.session.rollback()
             flash('Error Cancelling Appointment', 'danger')
             return redirect(url_for('appointments_page'))
-    
+
         
 #region Google Auth Routes
 @app.route("/auth/google")

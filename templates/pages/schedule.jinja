@@ -9,6 +9,53 @@
     const nowTimeString = currentTime.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit', hour12: true})
     console.log('NOWTIME:', nowTimeString)
     
+
+    // Function to render timeslots
+    // Render the timeslots for initial day perhaps for all
+    function renderTimeslots(date, timeslots, busyTimeslots=[], appointments={}) {
+      const now = new Date();
+      console.log('NOW:', now);
+      console.log('DATE:', date);
+      console.log('BUSY TIMESLOTS:', busyTimeslots);
+      console.log('TIMESLOTS:', timeslots);
+      console.log('APPOINTMENTS:', appointments);
+      console.log('date === now.toLocaleDateString():', date === now.toLocaleDateString());
+      if (date === now.toLocaleDateString()) {
+        for (let i = 0; i < timeslots.length; i++) {
+          let renderedTime = convertTimeSlotTime(timeslots[i]);
+          console.log('TIMESLOT:', typeof(timeslots[i]));
+          if (timeslots[i] in busyTimeslots) {
+            document.getElementById('listGroupRadioGrid_' + timeslots[i]).disabled = true;
+          } else if (renderedTime < now) {
+            document.getElementById('listGroupRadioGrid_' + timeslots[i]).disabled = true;
+          } else if (Object.keys(appointments).length !== 0) {
+            console.log('APPOINTMENTS:', appointments);
+            for (let i = 0; i < Object.keys(appointments).length ; i++) {
+              if (date === appointments.date && timeslots[i] === appointments.time) {
+                document.getElementById('listGroupRadioGrid_' + timeslots[i]).disabled = true;
+          }
+            }
+          } else {
+            document.getElementById('listGroupRadioGrid_' + timeslots[i]).disabled = false;
+          }
+        }
+    } else {
+        for (let i = 0; i < timeslots.length; i++) {
+          let renderedTime = convertTimeSlotTime(timeslots[i]);
+          console.log('TIMESLOT:', timeslots[i]);
+          console.log('RENDERED TIME:', renderedTime);
+          console.log('Busy Timeslots', busyTimeslots);
+          console.log('IS TIMESLOT IN BUSY:', timeslots[i] in busyTimeslots);
+            if (timeslots[i] in busyTimeslots) {
+              document.getElementById('listGroupRadioGrid_' + timeslots[i]).disabled = true;
+            } else {
+              document.getElementById('listGroupRadioGrid_' + timeslots[i]).disabled = false;
+            }
+      }
+    }
+    }
+    const appointments = {{ json_appts | tojson }};
+
     // Cycle to next schedule date, update timeslots
     function nextClick() {
       //Date Portion
@@ -19,6 +66,7 @@
       const timeDifference = Math.abs(nowDate - newDate)
 
       console.log('ORGJAVADATE:', nowDate)
+      console.log('NEWDATE:', newDate)
       if (timeDifference > 10 * oneDayMilliseconds) {
 
       } else {
@@ -48,10 +96,10 @@
         formattedDateKeys.push(formattedDate)
       }
 
-      console.log(formattedDateKeys)
-
       // Disable the timeslots that are already booked
-      renderTimeslots(hiddenDate, {{ timeslots | tojson }}, busyTimeSlotsDict[orgDateKeys[formattedDateKeys.indexOf(hiddenDate)]]);
+      console.log('MADE IT HERE NEXTCLICK')
+      renderTimeslots(hiddenDate, {{ timeslots | tojson }}, busyTimeSlotsDict[orgDateKeys[formattedDateKeys.indexOf(hiddenDate)]],);
+      console.log('MADE IT HERE NEXTCLICK AFTER')
     }
 
     // Cycle to previous schedule date, update timeslots
@@ -94,13 +142,23 @@
 
       // Disable the timeslots that are already booked
       
-      renderTimeslots(hiddenDate, {{ timeslots | tojson }}, busyTimeSlotsDict[orgDateKeys[formattedDateKeys.indexOf(hiddenDate)]]);
+      renderTimeslots(hiddenDate, {{ timeslots | tojson }}, busyTimeSlotsDict[orgDateKeys[formattedDateKeys.indexOf(hiddenDate)]],);
     }  
-    
+
+        // Render confirmation box upon click
+    function confirmBox() {
+      if (window.confirm('Are you sure you want to confirm this appointment?')) {
+        confirmClick();
+      } else {
+        console.log('Appointment not confirmed');
+      }
+      
+    }
     // Confirm the appointment when 'OK' is clicked
     function confirmClick() {
       const userId = '{{ session.user.id }}';
       const date = document.getElementById('hidden_date').value;
+      const trainer = document.getElementById('hidden_trainer').value;
       console.log('DATE IN CONFIRM CLICK:', date);
       let time = '';
       const radioButtons = document.getElementsByName('listGroupRadioGrid');
@@ -113,10 +171,11 @@
       const data = {
         userId: userId,
         date: date,
-        time: time
+        time: time,
+        trainer_id: trainer
       };
       // Send the data to the server
-      fetch('/schedule', {
+      fetch(`/schedule/${trainer}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -132,15 +191,7 @@
       });
     }
 
-    // Render confirmation box upon click
-    function confirmBox() {
-      if (window.confirm('Are you sure you want to confirm this appointment?')) {
-        confirmClick();
-      } else {
-        console.log('Appointment not confirmed');
-      }
-      
-    }
+
 
     // Convert the timeslot time to a Date object for comparison
     function convertTimeSlotTime(time) {
@@ -158,64 +209,14 @@
       return timeSlotTime;
     }
 
-    // Render the timeslots for initial day perhaps for all
-    function renderTimeslots(date, timeslots, busyTimeslots=[]) {
-      const now = new Date();
-      if (date === now.toLocaleDateString()) {
-        for (let i = 0; i < timeslots.length; i++) {
-          let renderedTime = convertTimeSlotTime(timeslots[i]);
-          console.log(renderedTime);
-          console.log(now);
-          if (timeslots[i] in busyTimeslots) {
-            document.getElementById('listGroupRadioGrid_' + timeslots[i]).disabled = true;
-          } else if (renderedTime < now) {
-            document.getElementById('listGroupRadioGrid_' + timeslots[i]).disabled = true;
-          } else {
-            document.getElementById('listGroupRadioGrid_' + timeslots[i]).disabled = false;
-          }
-        }
-    } else {
-        for (let i = 0; i < timeslots.length; i++) {
-          let renderedTime = convertTimeSlotTime(timeslots[i]);
-            if (timeslots[i] in busyTimeslots) {
-              document.getElementById('listGroupRadioGrid_' + timeslots[i]).disabled = true;
-            } else {
-              document.getElementById('listGroupRadioGrid_' + timeslots[i]).disabled = false;
-            }
-      }
-    }
-    }
-    const appointments = {{ json_appts | tojson }};
-    console.log(appointments);
 
 </script>
     <main>
     {# Pull Messages and Post Messages Sent From Server #}
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      {% for category, message in messages %}
-        {% if category == 'danger' %}
-        <div class="alert alert-danger alert-dismissible fade show align-items-center" role="alert">
-          {{ message }}
-          <h3>Please Try Again Later!</h3>
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        <div>
-        <button type="button" class="confirm" formaction="/schedule" aria-label="Back To Schedule"></button>
-        </div>
-        {% else %}
-        <div class="alert alert-success alert-dismissible fade show align-items-center" role="alert">
-          {{ message }}
-          <h3>Appointment request sent.  Please wait up to 24 hours for a confirmation!</h3>
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        <div>
-          <button type="button" class="confirm" formaction="/schedule" aria-label="Back To Schedule"></button>
-        </div>
-        {% endif %}
-      {% endfor %}
-    {% else %}
     {# Render Timeslots #}
+    {% if trainer %}
+    <h1 class="text-center">Schedule With: {{trainer.name}}</h1>
+    {% endif %}
     {% if timeslots and date %}
       <h1 class="text-center">Schedule</h1>
         <div class="d-flex justify-content-center schedule">
@@ -225,6 +226,7 @@
         </div>
       <form>
         <input type="hidden" name="hidden_date" id="hidden_date" value="{{date}}">
+        <input type="hidden" name="hidden_trainer" id="hidden_trainer" value="{{trainer.id}}">
           <div class="d-flex flex-column flex-md-row p-4 gap-4 py-md-5 align-items-center justify-content-center">
             <div class="list-group list-group-radio d-grid gap-2 border-0">
               {% for timeslot in timeslots %}
@@ -262,17 +264,15 @@
                   {% endif %}
                 {% endif %}
               {% endfor %}
+              {% endif %}
           {# Perform confirmation action upon button click #}
           <button class="btn btn-primary rounded-pill px-3" type="confirm" onclick="confirmBox()">Confirm</button>
           </div>
         </div>
       </form>
-    {% endif %}
-    {% endif %}
-    {% endwith %}
     <script>
     // Initial rendering of timeslots upon first load of page
-    renderTimeslots('{{ date }}', {{ timeslots | tojson }}, {{ busy_today | tojson }});
+    renderTimeslots('{{ date }}', {{ timeslots | tojson }}, {{ busy_today | tojson }}, {{ json_appts | tojson }});
     </script>
 </main>
 {% endblock content %}
