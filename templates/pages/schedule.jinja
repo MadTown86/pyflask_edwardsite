@@ -14,12 +14,13 @@
     // Render the timeslots for initial day perhaps for all
     function renderTimeslots(date, timeslots, busyTimeslots=[], appointments={}) {
       const now = new Date();
-      console.log('NOW:', now);
-      console.log('DATE:', date);
-      console.log('BUSY TIMESLOTS:', busyTimeslots);
-      console.log('TIMESLOTS:', timeslots);
-      console.log('APPOINTMENTS:', appointments);
-      console.log('date === now.toLocaleDateString():', date === now.toLocaleDateString());
+      for (let i = 0; i < busyTimeslots.length; i++) {
+        for (let j = 0; j < timeslots.length; j++) {
+          console.log(timeslots[j] === busyTimeslots[i]);
+          console.log('TIMESLOTS:', timeslots[j]);
+          console.log('BUSYTIMESLOTS:', busyTimeslots[i]);
+        }
+      }
       if (date === now.toLocaleDateString()) {
         for (let i = 0; i < timeslots.length; i++) {
           let renderedTime = convertTimeSlotTime(timeslots[i]);
