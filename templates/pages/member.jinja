@@ -76,7 +76,7 @@
         {% if appointment.appointment_date < current_date %}
         {% else %}
       <div class="alert alert-warning mt-3" role="alert">
-        Appointment scheduled for {{ appointment.appointment_date }} at {{ appointment.appointment_time }} is pending
+        Appointment scheduled for {{ appointment.appointment_date }} at {{ appointment.appointment_time }}  with {{appointment.trainer_id}} is pending
       </div>
       {% endif %}
       {% endif %}

@@ -807,14 +807,14 @@ def schedule_page(trainer):
                 return redirect(url_for('member_page'))
             
         elif request.method == 'POST':
-            data = request.get_json()
-            app.logger.info('DATA RECEIVED FROM POST REQUEST: %s', data)
-            date_post = data['date']
-            time = data['time']
-            appt_request = datetime.strptime(date_post + ' ' + time, datefmtreq)
+            date = request.form['hidden_date']
+            time = request.form['listGroupRadioGrid']
+            user = session.get('user')
+            trainer_id = request.form['hidden_trainer']
+            appt_request = datetime.strptime(date + ' ' + time, datefmtreq)
             print(appt_request)
             try:
-                appt = Appointments(trainer_id=2, service_id=1, customer_id=user['id'], appointment_date=appt_request, appointment_time=appt_request.time())
+                appt = Appointments(trainer_id=trainer_id, service_id=1, customer_id=user['id'], appointment_date=appt_request, appointment_time=appt_request.time())
                 db.session.add(appt)
                 db.session.commit()
                 flash('Appointment Request Sent', 'success')

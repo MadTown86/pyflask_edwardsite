@@ -4,57 +4,41 @@
     document.getElementById('member_nav').classList.add('active')
     document.getElementById('member_nav').classList.add('text-light')
     const nowDateTime = new Intl.DateTimeFormat('en-US').format(new Date())
-    console.log('NOWDATETIME:', nowDateTime)
     currentTime = new Date()
     const nowTimeString = currentTime.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit', hour12: true})
-    console.log('NOWTIME:', nowTimeString)
     
 
     // Function to render timeslots
     // Render the timeslots for initial day perhaps for all
-    function renderTimeslots(date, timeslots, busyTimeslots=[], appointments={}) {
+    function renderTimeslots(date, timeslots, busyTimeslots=[]) {
       const now = new Date();
-      for (let i = 0; i < busyTimeslots.length; i++) {
-        for (let j = 0; j < timeslots.length; j++) {
-          console.log(timeslots[j] === busyTimeslots[i]);
-          console.log('TIMESLOTS:', timeslots[j]);
-          console.log('BUSYTIMESLOTS:', busyTimeslots[i]);
-        }
-      }
       if (date === now.toLocaleDateString()) {
         for (let i = 0; i < timeslots.length; i++) {
           let renderedTime = convertTimeSlotTime(timeslots[i]);
-          console.log('TIMESLOT:', typeof(timeslots[i]));
-          if (timeslots[i] in busyTimeslots) {
+          if (renderedTime < now) {
             document.getElementById('listGroupRadioGrid_' + timeslots[i]).disabled = true;
-          } else if (renderedTime < now) {
+          } else if (busyTimeslots.includes(timeslots[i])) {
             document.getElementById('listGroupRadioGrid_' + timeslots[i]).disabled = true;
-          } else if (Object.keys(appointments).length !== 0) {
-            console.log('APPOINTMENTS:', appointments);
-            for (let i = 0; i < Object.keys(appointments).length ; i++) {
-              if (date === appointments.date && timeslots[i] === appointments.time) {
-                document.getElementById('listGroupRadioGrid_' + timeslots[i]).disabled = true;
-          }
-            }
           } else {
             document.getElementById('listGroupRadioGrid_' + timeslots[i]).disabled = false;
           }
         }
+
+    } else if (busyTimeslots.length > 0){
+      for (let i = 0; i < timeslots.length; i++) {
+        if (busyTimeslots.includes(timeslots[i])) {
+          document.getElementById('listGroupRadioGrid_' + timeslots[i]).disabled = true;
+        } else {
+          document.getElementById('listGroupRadioGrid_' + timeslots[i]).disabled = false;
+        }
+      }
     } else {
-        for (let i = 0; i < timeslots.length; i++) {
-          let renderedTime = convertTimeSlotTime(timeslots[i]);
-          console.log('TIMESLOT:', timeslots[i]);
-          console.log('RENDERED TIME:', renderedTime);
-          console.log('Busy Timeslots', busyTimeslots);
-          console.log('IS TIMESLOT IN BUSY:', timeslots[i] in busyTimeslots);
-            if (timeslots[i] in busyTimeslots) {
-              document.getElementById('listGroupRadioGrid_' + timeslots[i]).disabled = true;
-            } else {
-              document.getElementById('listGroupRadioGrid_' + timeslots[i]).disabled = false;
-            }
+      for (let i = 0; i < timeslots.length; i++) {
+        document.getElementById('listGroupRadioGrid_' + timeslots[i]).disabled = false;
       }
     }
-    }
+
+  }
     const appointments = {{ json_appts | tojson }};
 
     // Cycle to next schedule date, update timeslots
@@ -66,8 +50,6 @@
       const oneDayMilliseconds = 86400000
       const timeDifference = Math.abs(nowDate - newDate)
 
-      console.log('ORGJAVADATE:', nowDate)
-      console.log('NEWDATE:', newDate)
       if (timeDifference > 10 * oneDayMilliseconds) {
 
       } else {
@@ -78,7 +60,6 @@
         document.getElementById('hidden_date').value = dateFormatted
       }
       const hiddenDate = document.getElementById('hidden_date').value
-      console.log(hiddenDate)
 
       //Time Portion
       const timeslots = document.getElementsByName('listGroupRadioGrid')
@@ -98,9 +79,7 @@
       }
 
       // Disable the timeslots that are already booked
-      console.log('MADE IT HERE NEXTCLICK')
       renderTimeslots(hiddenDate, {{ timeslots | tojson }}, busyTimeSlotsDict[orgDateKeys[formattedDateKeys.indexOf(hiddenDate)]],);
-      console.log('MADE IT HERE NEXTCLICK AFTER')
     }
 
     // Cycle to previous schedule date, update timeslots
@@ -111,7 +90,6 @@
       const newDate2 = new Date(dateFromH2)
       newDate2.setDate(newDate2.getDate()-1)
       const timeDifference2 = newDate2 - orgJavaDate
-      console.log('ORG DATE:', orgJavaDate)
 
       // Check to see if html date is == to orgDate, then disable rest of code
       if (timeDifference2 < 0) {
@@ -122,7 +100,6 @@
         document.getElementById('hidden_date').value = dateFormatted // Update the hidden date
       }
       const hiddenDate = document.getElementById('hidden_date').value
-      console.log(hiddenDate)
 
       //Time Portion
       const timeslots = document.getElementsByName('listGroupRadioGrid')
@@ -157,10 +134,11 @@
     }
     // Confirm the appointment when 'OK' is clicked
     function confirmClick() {
-      const userId = '{{ session.user.id }}';
+      document.getElementById('confirm').submit();
+    }
+      {# const userId = '{{ session.user.id }}';
       const date = document.getElementById('hidden_date').value;
       const trainer = document.getElementById('hidden_trainer').value;
-      console.log('DATE IN CONFIRM CLICK:', date);
       let time = '';
       const radioButtons = document.getElementsByName('listGroupRadioGrid');
       for (let i = 0; i < radioButtons.length; i++) {
@@ -183,14 +161,18 @@
         },
         body: JSON.stringify(data)
       })
-      .then(response => response.json())
+      .then(response => {
+        window.location.href = '/member';
+        return response.json();
+      })
       .then(data => {
         console.log('Success:', data);
       })
       .catch((error) => {
         console.error('Error:', error);
       });
-    }
+      window.location.href = '/member';
+    } #}
 
 
 
@@ -206,7 +188,6 @@
         hours += 12;
       }
       timeSlotTime.setHours(hours, minutes, 0, 0);
-      console.log(timeSlotTime);
       return timeSlotTime;
     }
 
@@ -225,7 +206,7 @@
         <h2 class="text-center" id="date">{{date}}</h2>
         <button id="next-date-button" onclick="nextClick()"><span>&#8594</span></button>
         </div>
-      <form>
+      <form method="POST" action="/schedule/{{trainer.id}}">
         <input type="hidden" name="hidden_date" id="hidden_date" value="{{date}}">
         <input type="hidden" name="hidden_trainer" id="hidden_trainer" value="{{trainer.id}}">
           <div class="d-flex flex-column flex-md-row p-4 gap-4 py-md-5 align-items-center justify-content-center">
@@ -267,13 +248,13 @@
               {% endfor %}
               {% endif %}
           {# Perform confirmation action upon button click #}
-          <button class="btn btn-primary rounded-pill px-3" type="confirm" onclick="confirmBox()">Confirm</button>
+          <button class="btn btn-primary rounded-pill px-3" id='confirm' type="confirm" onclick="confirmBox()">Confirm</button>
           </div>
         </div>
       </form>
     <script>
     // Initial rendering of timeslots upon first load of page
-    renderTimeslots('{{ date }}', {{ timeslots | tojson }}, {{ busy_today | tojson }}, {{ json_appts | tojson }});
+    renderTimeslots('{{ date }}', {{ timeslots | tojson }}, {{ busy_today | tojson }});
     </script>
 </main>
 {% endblock content %}
