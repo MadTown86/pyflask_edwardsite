@@ -366,10 +366,13 @@ def member_page():
     if request.method == 'GET':
         user = session.get('user')
         if user:
-            try: 
-                appointments = Appointments.query.filter_by(customer_id=user['id']).all()
+            try:
+                #TODO - Check to see if this join works as desired - implement in jinja template 
+                appointments = db.session.query(Appointments, Trainers).join(Trainers, Appointments.trainer_id == Trainers.id).filter(Appointments.customer_id == user['id']).all()
+                for i in range(len(appointments)):
+                    print(appointments[i][0].appointment_date, appointments[i][0].appointment_time, appointments[i][0].confirmed, appointments[i][1].name)
                 if appointments:
-                    print(appointments[0].appointment_date, appointments[0].appointment_time, appointments[0].confirmed)
+                    print(appointments[0].appointment_date, appointments[0].appointment_time, appointments[0].confirmed, appointments[0].name)
                     return render_template("/pages/member.jinja", year=year, user=user, appointments=appointments, current_date=datetime.now())
                 else:
                     return render_template("/pages/member.jinja", year=year, user=user)
@@ -863,6 +866,45 @@ def appointments_page():
             db.session.rollback()
             flash('Error Cancelling Appointment', 'danger')
             return redirect(url_for('appointments_page'))
+        
+@app.route("/appointments_trainer", methods=['GET', 'POST'])
+def appointments_trainer_page():
+    trainer = session.get('trainer')
+    if not trainer:
+        return redirect(url_for('trainer_login'))
+    else:
+        if request.method == 'GET':
+            try:
+                appointments = Appointments.query.filter_by(trainer_id=trainer['trainer_id']).all()
+                for appointment in appointments:
+                    if appointment.appointment_date < datetime.now():
+                        db.session.delete(appointment)
+                        db.session.commit()
+                    elif appointment.appointment_date == datetime.now() and datetime.date(appointment.appointment_time) < datetime.now():
+                        db.session.delete(appointment)
+                        db.session.commit()
+                    else:
+                        continue
+                appointments = Appointments.query.filter_by(trainer_id=trainer['trainer_id']).all()
+                return render_template("/pages/appointments_trainer.jinja", year=year, trainer=trainer, appointments=appointments)
+            except Exception as e:
+                print(e)
+                flash('Error Fetching Appointments', 'danger')
+                return redirect(url_for('trainer_member'))
+        elif request.method == 'POST':
+            try:
+                appointment_confirm_id = request.form.get('confirm')
+                if appointment_confirm_id:
+                    print('CONFIRMED APPOINTMENT ID', appointment_confirm_id)
+                    return redirect(url_for('appointments_trainer_page'))
+                appointment_cancel_id = request.form.get('cancel')
+                if appointment_cancel_id:
+                    print('CANCELLED APPOINTMENT ID', appointment_cancel_id)
+                    return redirect(url_for('appointments_trainer_page'))
+            except Exception as e:
+                print(e)
+                flash('Error Confirming Appointment', 'danger')
+                return redirect(url_for('appointments_trainer_page'))
 
         
 #region Google Auth Routes

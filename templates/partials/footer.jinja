@@ -14,7 +14,11 @@
                     <li><a href="/privacy_policy">Privacy Policy</a></li>
                 </ul>
                 <ul class="nav col-md justify-content-end list-unstyled d-flex">
+                    {% if not trainer %}
                     <li><a href="/trainer_login">Trainer Login</a></li>
+                    {% else %}
+                    <li><a href="/trainer_member">Trainer Member</a></li>
+                    {% endif %}
                 <li class="ms-3"><a class="text-body-secondary" href="#"><svg class="bi" width="24" height="24"><use xlink:href="#twitter"></use></svg></a></li>
                 <li class="ms-3"><a class="text-body-secondary" href="#"><svg class="bi" width="24" height="24"><use xlink:href="#instagram"></use></svg></a></li>
                 <li class="ms-3"><a class="text-body-secondary" href="#"><svg class="bi" width="24" height="24"><use xlink:href="#facebook"></use></svg></a></li>
