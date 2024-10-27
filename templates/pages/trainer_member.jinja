@@ -65,29 +65,31 @@
       {% if appointment.confirmed == false%}
        {% if appointment.appointment_date < current_date %}
        {% else %}
+        {% if appointment.appointment_time < current_time %}
+        {% else %}
       <div class="alert alert-warning mt-3" role="alert">
-        Appointment scheduled for {{ appointment.appointment_date }} at {{ appointment.appointment_time }}  with client {{appointment.customer_name}} is pending
+        Appointment scheduled for {{ appointment.appointment_date }} at {{ appointment.appointment_time }}  with {{appointment.customer_name}} is pending
       </div>
       {% endif %}
       {% endif %}
       {% else %}
       {% if appointment.appointment_date < current_date %}
        {% else %}
-       {% if appointment.appointment_time < current_date %}
+       {% if appointment.appointment_time < current_time %}
       <div class="alert alert-success mt-3" role="alert">
-        Appointment scheduled for {{ appointment.appointment_date }} at {{ appointment.appointment_time }} is confirmed
-      </p>
+        Appointment scheduled for {{ appointment.appointment_date }} at {{ appointment.appointment_time }} with {{appointment.customer_name}} is confirmed
+      </div>
       {% endif %}
       {% endif %}
       {% endif %}
      {% endfor %}
-     </div>
+     </p>
     {% else %}
       <div class="alert alert-info mt-3" role="alert">
         No appointments scheduled
       </div>
     {% endif %}
-    </p>
+
     <div class="container">
     <div class="row">
       <div class="col">

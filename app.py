@@ -363,6 +363,7 @@ def trainer_page():
 @app.route("/member", methods=['GET'])
 def member_page():
     user = session.get('user')
+    today_time = datetime.time(datetime.now())
     if request.method == 'GET':
         user = session.get('user')
         if user:
@@ -370,7 +371,11 @@ def member_page():
                 #TODO - Check to see if this join works as desired - implement in jinja template 
                 result = db.session.execute(select(Appointments, Trainers).join(Appointments, Trainers.id == Appointments.trainer_id).filter_by(customer_id=user['id']))
                 appointments = []
+                
                 for app, tra in result:
+                    print('appointment_date', type(app.appointment_date))
+                    print('appointment_time', type(app.appointment_time))
+                    print('today_time', type(today_time))
                     app_to_add = {
                         'appointment_id':app.id,
                         'trainer_name':tra.name,
@@ -379,12 +384,10 @@ def member_page():
                         'confirmed':app.confirmed
                     }
                     appointments.append(app_to_add)
-                print(appointments)
-                print(appointments[0])
                 if appointments:
-                    return render_template("/pages/member.jinja", year=year, user=user, appointments=appointments, current_date=datetime.now())
+                    return render_template("/pages/member.jinja", year=year, user=user, appointments=appointments, current_date=datetime.now(), current_time = today_time)
                 else:
-                    return render_template("/pages/member.jinja", year=year, user=user)
+                    return render_template("/pages/member.jinja", year=year, user=user, current_date=datetime.now(), current_time = today_time)
             except Exception as e:
                 print(e)
                 flash('Error Fetching Appointments', 'danger')
@@ -523,13 +526,15 @@ def trainer_email_reset(reset_code):
 @app.route("/trainer_member", methods=['GET'])
 def trainer_member():
     trainer_user = session.get('trainer')
+    today = datetime.now()
+    today_time = datetime.time(datetime.now())
+    print(today_time)
     if not trainer_user:
         return redirect(url_for('trainer_login'))
     else:
         if request.method == 'GET':
             try: 
                 customer_appointments = db.session.execute(select(Appointments, User).join(Appointments, Appointments.customer_id == User.id).filter_by(trainer_id=trainer_user['trainer_id']))
-                print(customer_appointments)
                 appointment_send = []
                 for app, user in customer_appointments:
                     app_to_add = {
@@ -540,11 +545,10 @@ def trainer_member():
                         'confirmed':app.confirmed
                     }
                     appointment_send.append(app_to_add)
-                
                 if appointment_send:
-                    return render_template("/pages/trainer_member.jinja", year=year, trainer=trainer_user, appointments=appointment_send, current_date=datetime.now())
+                    return render_template("/pages/trainer_member.jinja", year=year, trainer=trainer_user, appointments=appointment_send, current_date=today, current_time=today_time)
                 else:
-                    return render_template("/pages/trainer_member.jinja", year=year, trainer=trainer_user, appointments=[], current_date=datetime.now())
+                    return render_template("/pages/trainer_member.jinja", year=year, trainer=trainer_user, appointments=[], current_date=today, current_time=today_time)
             except Exception as e:
                 print(e)
                 flash('Error Fetching Appointments', 'danger')
@@ -855,6 +859,8 @@ def schedule_page(trainer):
 @app.route("/appointments", methods=['GET', 'POST'])
 def appointments_page():
     user = session.get('user')
+    today = datetime.now()
+    today_time = datetime.time(datetime.now())
     if request.method == 'GET':
         if user:
             try:
@@ -863,11 +869,11 @@ def appointments_page():
                     if appointment.appointment_date < datetime.now():
                         db.session.delete(appointment)
                         db.session.commit()
-                    elif appointment.appointment_date == datetime.now() and datetime.date(appointment.appointment_time) < datetime.now():
+                    elif appointment.appointment_date == datetime.now() and datetime.date(appointment.appointment_time) < datetime.time(datetime.now()):
                         db.session.delete(appointment)
                         db.session.commit()
                     else:
-                        return render_template("/pages/appointments.jinja", year=year, user=user, appointments=appointments)
+                        return render_template("/pages/appointments.jinja", year=year, user=user, appointments=appointments, current_date=today, current_time=today_time)
                 else :
                     return redirect(url_for('member_page'))
             except Exception as e:

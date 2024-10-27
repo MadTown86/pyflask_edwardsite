@@ -26,18 +26,28 @@
       <tr>
         <th scope="col">Date</th>
         <th scope="col">Time</th>
+        <th scope="col">Confirmed</th>
         <th scope="col">Cancel</th>
       </tr>
     </thead>
     <tbody>
       {% for appointment in appointments %}
+      {% if appointment.appointment_date > current_date %}
+      {% if appointment.appointment_time > current_time %}
       <tr>
         <td>{{ appointment.appointment_date }}</td>
         <td>{{ appointment.appointment_time }}</td>
+        {% if appointment.confirmed == true %}
+        <td>Confirmed</td>
+        {% else %}
+        <td>Pending</td>
+        {% endif %}
         <td>
           <button class="btn btn-danger" type="submit" name="cancel" value="{{ appointment.id }}">Cancel</button>
         </td>
       </tr>
+      {% endif %}
+      {% endif %}
       {% endfor %}
     </tbody>
   </table>
