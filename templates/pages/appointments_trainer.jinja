@@ -35,7 +35,7 @@
 
 <p>Please select appointments you would like to cancel.  If you need to change the time, please cancel first and then go to the member page and click 'Schedule Consultation' to re-schedule.</p>
 
-<form method="post" action="/appointments">
+<form method="post" action="/appointments_trainer">
   <table class="table table-striped">
     <thead>
       <tr>
@@ -50,6 +50,10 @@
       <tr>
         <td>{{ appointment.appointment_date }}</td>
         <td>{{ appointment.appointment_time }}</td>
+        {% if appointment.confirmed == true %}
+        <td>Confirmed</td>
+        <td><button class="btn btn-warning" type="submit" name="cancel" value="{{ appointment.id }}">Cancel</button></td>
+        {% else %}
         <td>
           <button class="btn btn-danger" type="submit" name="confirm" value="{{ appointment.id }}">Confirm</button>
         </td>
@@ -57,6 +61,7 @@
           <button class="btn btn-warning" type="submit" name="cancel" value="{{ appointment.id }}">Cancel</button>
         </td>
       </tr>
+      {% endif %}
       {% endfor %}
     {% else %}
     <div class="container">

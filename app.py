@@ -528,7 +528,7 @@ def trainer_member():
     else:
         if request.method == 'GET':
             try: 
-                customer_appointments = db.session.execute(select(Appointments, User).join(Appointments, User.id == Appointments.customer_id).filter_by(trainer_id=trainer_user['trainer_id']))
+                customer_appointments = db.session.execute(select(Appointments, User).join(Appointments, Appointments.customer_id == User.id).filter_by(trainer_id=trainer_user['trainer_id']))
                 print(customer_appointments)
                 appointment_send = []
                 for app, user in customer_appointments:
@@ -918,11 +918,18 @@ def appointments_trainer_page():
             try:
                 appointment_confirm_id = request.form.get('confirm')
                 if appointment_confirm_id:
-                    print('CONFIRMED APPOINTMENT ID', appointment_confirm_id)
+                    appt = Appointments.query.filter_by(id=appointment_confirm_id).first()
+                    appt.confirmed = True
+                    db.session.add(appt)
+                    db.session.commit()
+                    flash('Appointment Confirmed', 'success')
                     return redirect(url_for('appointments_trainer_page'))
                 appointment_cancel_id = request.form.get('cancel')
                 if appointment_cancel_id:
-                    print('CANCELLED APPOINTMENT ID', appointment_cancel_id)
+                    appt = Appointments.query.filter_by(id=appointment_cancel_id).first()
+                    db.session.delete(appt)
+                    db.session.commit()
+                    flash('Appointment Cancelled', 'success')
                     return redirect(url_for('appointments_trainer_page'))
             except Exception as e:
                 print(e)
