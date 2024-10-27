@@ -18,7 +18,7 @@ from flask import has_request_context, request, make_response
 from flask import Flask, render_template, \
 redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import text
+from sqlalchemy import text, select
 from werkzeug.security import generate_password_hash, check_password_hash
 import time as tt
 from authlib.integrations.flask_client import OAuth
@@ -368,11 +368,20 @@ def member_page():
         if user:
             try:
                 #TODO - Check to see if this join works as desired - implement in jinja template 
-                appointments = db.session.query(Appointments, Trainers).join(Trainers, Appointments.trainer_id == Trainers.id).filter(Appointments.customer_id == user['id']).all()
-                for i in range(len(appointments)):
-                    print(appointments[i][0].appointment_date, appointments[i][0].appointment_time, appointments[i][0].confirmed, appointments[i][1].name)
+                result = db.session.execute(select(Appointments, Trainers).join(Appointments, Trainers.id == Appointments.trainer_id).filter_by(customer_id=user['id']))
+                appointments = []
+                for app, tra in result:
+                    app_to_add = {
+                        'appointment_id':app.id,
+                        'trainer_name':tra.name,
+                        'appointment_date':app.appointment_date,
+                        'appointment_time':app.appointment_time,
+                        'confirmed':app.confirmed
+                    }
+                    appointments.append(app_to_add)
+                print(appointments)
+                print(appointments[0])
                 if appointments:
-                    print(appointments[0].appointment_date, appointments[0].appointment_time, appointments[0].confirmed, appointments[0].name)
                     return render_template("/pages/member.jinja", year=year, user=user, appointments=appointments, current_date=datetime.now())
                 else:
                     return render_template("/pages/member.jinja", year=year, user=user)
@@ -389,32 +398,33 @@ def member_page():
 # Route to Trainer Login Page
 @app.route("/trainer_login", methods=['GET', 'POST'])
 def trainer_login():
-    if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password']
-        try:
-            trainer = Trainer_User.query.filter_by(email=email).first()
-        except Exception as e:
-            print(e)
-            flash('Error Fetching Trainer User', 'danger')
-            return redirect(url_for('trainer_login'))
-        if not trainer:
-            flash("Trainer User Not Found or Database Error", 'danger')
-            return redirect(url_for('trainer_login'))
-        else:
-            if trainer and check_password_hash(trainer.password, password):
-                session['trainer'] = {"email":trainer.email, "trainer_id":trainer.trainer_id}
-                return render_template('pages/trainer_member.jinja', year=year, trainer=trainer)
-            else:
-                print("Failed Here")
-                flash(f'Incorrect Login Credentials', 'danger')
+    trainer = session.get('trainer')
+    if trainer:
+        return redirect(url_for('trainer_member'))
+    else:
+        if request.method == 'POST':
+            email = request.form['email']
+            password = request.form['password']
+            try:
+                trainer = Trainer_User.query.filter_by(email=email).first()
+            except Exception as e:
+                print(e)
+                flash('Error Fetching Trainer User', 'danger')
                 return redirect(url_for('trainer_login'))
-    if request.method == 'GET':
-        trainer = session.get('trainer')
-        if trainer:
-            return render_template('/pages/trainer_member.jinja', year=year, trainer=trainer)
-        else:
+            if not trainer:
+                flash("Trainer User Not Found or Database Error", 'danger')
+                return redirect(url_for('trainer_login'))
+            else:
+                if trainer and check_password_hash(trainer.password, password):
+                    session['trainer'] = {"email":trainer.email, "trainer_id":trainer.trainer_id}
+                    return redirect(url_for('trainer_member'))
+                else:
+                    print("Failed Here")
+                    flash(f'Incorrect Login Credentials', 'danger')
+                    return redirect(url_for('trainer_login'))
+        if request.method == 'GET':
             return render_template('/pages/trainer_login.jinja', year=year, trainer=trainer)
+
         
 # Route to Trainer Reset Password Page From Trainer Member
 @app.route("/trainer_reset", methods=['GET', 'POST'])
@@ -512,20 +522,33 @@ def trainer_email_reset(reset_code):
 # Route to Trainer Member Page
 @app.route("/trainer_member", methods=['GET'])
 def trainer_member():
-    if request.method == 'GET':
-        trainer = session.get('trainer')
-        if trainer:
+    trainer_user = session.get('trainer')
+    if not trainer_user:
+        return redirect(url_for('trainer_login'))
+    else:
+        if request.method == 'GET':
             try: 
-                appointments = Appointments.query.filter_by(trainer_id=trainer['trainer_id']).all()
-                if appointments:
-                    print(appointments[0].appointment_date, appointments[0].appointment_time, appointments[0].confirmed)
-                    return render_template("/pages/trainer_member.jinja", year=year, trainer=trainer, appointments=appointments, current_date=datetime.now())
+                customer_appointments = db.session.execute(select(Appointments, User).join(Appointments, User.id == Appointments.customer_id).filter_by(trainer_id=trainer_user['trainer_id']))
+                print(customer_appointments)
+                appointment_send = []
+                for app, user in customer_appointments:
+                    app_to_add = {
+                        'appointment_id':app.id,
+                        'customer_name':user.fN + ' ' + user.lN,
+                        'appointment_date':app.appointment_date,
+                        'appointment_time':app.appointment_time,
+                        'confirmed':app.confirmed
+                    }
+                    appointment_send.append(app_to_add)
+                
+                if appointment_send:
+                    return render_template("/pages/trainer_member.jinja", year=year, trainer=trainer_user, appointments=appointment_send, current_date=datetime.now())
                 else:
-                    return render_template("/pages/trainer_member.jinja", year=year, user=trainer)
+                    return render_template("/pages/trainer_member.jinja", year=year, trainer=trainer_user, appointments=[], current_date=datetime.now())
             except Exception as e:
                 print(e)
                 flash('Error Fetching Appointments', 'danger')
-                return redirect(url_for('trainer_member'))
+                return redirect(url_for('trainer_login'))
         else:
             return redirect(url_for('trainer_login'))
         
