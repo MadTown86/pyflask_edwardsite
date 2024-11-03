@@ -12,7 +12,8 @@
     // Render the timeslots for initial day perhaps for all
     function renderTimeslots(date, timeslots, busyTimeslots=[]) {
       const now = new Date();
-      if (date === now.toLocaleDateString()) {
+      const date_transform = new Date(date).toLocaleDateString();
+      if (date_transform === now.toLocaleDateString()) {
         for (let i = 0; i < timeslots.length; i++) {
           let renderedTime = convertTimeSlotTime(timeslots[i]);
           if (renderedTime < now) {
@@ -134,7 +135,7 @@
     }
     // Confirm the appointment when 'OK' is clicked
     function confirmClick() {
-      document.getElementById('confirm').submit();
+      document.getElementById('confirm');
     }
       {# const userId = '{{ session.user.id }}';
       const date = document.getElementById('hidden_date').value;

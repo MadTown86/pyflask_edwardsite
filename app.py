@@ -915,7 +915,16 @@ def appointments_trainer_page():
                     else:
                         continue
                 appointments = Appointments.query.filter_by(trainer_id=trainer['trainer_id']).all()
-                return render_template("/pages/appointments_trainer.jinja", year=year, trainer=trainer, appointments=appointments)
+                client_ids = []
+                for appointment in appointments:
+                    client_ids.append(appointment.customer_id)
+                print(client_ids)
+                clients = User.query.filter(User.id.in_(client_ids)).all()
+                client_dict = {}
+                for client in clients:
+                    client_dict[client.id] = client.fN + ' ' + client.lN
+                print(client_dict)
+                return render_template("/pages/appointments_trainer.jinja", year=year, trainer=trainer, appointments=appointments, clients=client_dict)
             except Exception as e:
                 print(e)
                 flash('Error Fetching Appointments', 'danger')
@@ -928,6 +937,12 @@ def appointments_trainer_page():
                     appt.confirmed = True
                     db.session.add(appt)
                     db.session.commit()
+                    user_email = User.query.filter_by(id=appt.customer_id).first().email
+                    msg = Message(subject='Appointment Confirmation - Visions.Fit', \
+                                body=f'Dear User:\nYour Appointment with {trainer["name"]} has been confirmed for {appt.appointment_date} at {appt.appointment_time}', \
+                                recipients=[user_email])
+                    with mail.connect() as conn:
+                        conn.send(msg)
                     flash('Appointment Confirmed', 'success')
                     return redirect(url_for('appointments_trainer_page'))
                 appointment_cancel_id = request.form.get('cancel')
@@ -935,6 +950,12 @@ def appointments_trainer_page():
                     appt = Appointments.query.filter_by(id=appointment_cancel_id).first()
                     db.session.delete(appt)
                     db.session.commit()
+                    user_email = User.query.filter_by(id=appt.customer_id).first().email
+                    msg = Message(subject='Appointment Cancellation - Visions.Fit', \
+                                body=f'Dear User:\nYour Appointment with {trainer["name"]} has been cancelled for {appt.appointment_date} at {appt.appointment_time}, please contact your trainer to re-schedule', \
+                                recipients=[user_email])
+                    with mail.connect() as conn:
+                        conn.send(msg)
                     flash('Appointment Cancelled', 'success')
                     return redirect(url_for('appointments_trainer_page'))
             except Exception as e:
