@@ -253,6 +253,19 @@
           </div>
         </div>
       </form>
+      <div class="flex-container">
+        <div class="row justify-content-md-center">
+          <div class="col col-lg-2">
+          </div>
+          <div class="col-md-auto">
+              <form method="get" action="/member">
+              <button class="btn btn-success w-15 my-2 py-2 justify-content-cente" type="submit">Back</button>
+              </form>
+          </div>
+          <div class="col col-lg-2">
+          </div>
+        </div>
+      </div>
     <script>
     // Initial rendering of timeslots upon first load of page
     renderTimeslots('{{ date }}', {{ timeslots | tojson }}, {{ busy_today | tojson }});
