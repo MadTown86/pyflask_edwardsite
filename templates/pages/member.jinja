@@ -70,32 +70,31 @@
     <p>
     {% if appointments %}
      {% for appointment in appointments %}
-      {% if appointment.confirmed == false%}
-       {% if appointment.appointment_date < current_date %}
-       {% else %}
-        {% if appointment.appointment_time < current_time %}
-        {% else %}
-      <div class="alert alert-warning mt-3" role="alert">
-        Appointment scheduled for {{ appointment.appointment_date }} at {{ appointment.appointment_time }}  with {{appointment.trainer_name}} is pending
-      </div>
-      {% endif %}
-      {% endif %}
-      {% else %}
-      {% if appointment.appointment_date < current_date %}
-       {% else %}
-       {% if appointment.appointment_time < current_time %}
-      <div class="alert alert-success mt-3" role="alert">
-        Appointment scheduled for {{ appointment.appointment_date }} at {{ appointment.appointment_time }} with {{appointment.trainer_name}} is confirmed
-      </div>
-      {% endif %}
-      {% endif %}
-      {% endif %}
-     {% endfor %}
-     </div>
-    {% else %}
-      <div class="alert alert-info mt-3" role="alert">
-        No appointments scheduled
-      </div>
+       {% if appointment.appointment_date == current_date %}
+          {% if appointment.appointment_time > current_time %}
+            {% if appointment.confirmed == true %}
+          <div class="alert alert-success mt-3" role="alert">
+            <p>You have a confirmed appointment with {{appointment.trainer_name}} on {{ appointment.appointment_date }} at {{ appointment.appointment_time }}.</p>
+          </div>
+            {% else %}
+          <div class="alert alert-warning mt-3" role="alert">
+            <p>You have a pending appointment with {{appointment.trainer_name}} on {{ appointment.appointment_date }} at {{ appointment.appointment_time }}.</p>
+          </div>
+            {% endif %}
+          {% endif %}
+        {% endif %}
+        {% if appointment.appointment_date > current_date %}
+          {% if appointment.confirmed == true %}
+          <div class="alert alert-success mt-3" role="alert">
+            <p>You have a confirmed appointment with {{appointment.trainer_name}} on {{ appointment.appointment_date }} at {{ appointment.appointment_time }}.</p>
+          </div>
+          {% else %}
+          <div class="alert alert-warning mt-3" role="alert">
+            <p>You have a pending appointment with {{appointment.trainer_name}} on {{ appointment.appointment_date }} at {{ appointment.appointment_time }}.</p>
+          </div>
+          {% endif %}
+        {% endif %}
+      {% endfor %}
     {% endif %}
     </p>
     <div class="container">

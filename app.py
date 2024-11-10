@@ -311,32 +311,35 @@ def food_page():
 @app.route("/contact", methods=['GET', 'POST'])
 def contact_page():
     user = session.get('user')
-    if request.method == 'GET':
-        return render_template("/pages/contact.jinja", year=year, user=user)
-    if request.method == 'POST':
-        name = request.form['name']
-        email = request.form['email']
-        message = request.form['message']
-        msg_tovisions = Message(
-            subject='User Message - Visions.fit',
-            recipients=['grover.donlon@gmail.com'],
-            html=f'<html><p>Dear Visions Member!</p>{name} with email {email} has sent you the following message:</p><p>{message}</p></html>'
-        )
-        msg_tosender = Message(
-            subject='Contact Request Message - Visions.Fit',
-            html=f'<html><p>Thank you {name} for contacting Visions.Fit, Please be patient as it can take up to 48 hours for a response.</p></html>',
-            recipients=[f'{email}']
-        )
-        try:
-            with mail.connect() as conn:
-                conn.send(msg_tovisions)
-                conn.send(msg_tosender)
-            flash('Email Sent Successfully - Please Wait 24 Hours For Your Response', 'success')
-            return redirect(url_for('contact_page'))
-        except Exception as e:
-            print(e)
-            flash('Internal Error - Please Try Again Later', 'danger')
-            return redirect(url_for('contact_page'))
+    if not user:
+        return redirect(url_for('login_page'))
+    else:
+        if request.method == 'GET':
+            return render_template("/pages/contact.jinja", year=year, user=user)
+        if request.method == 'POST':
+            name = request.form['name']
+            email = request.form['email']
+            message = request.form['message']
+            msg_tovisions = Message(
+                subject='User Message - Visions.fit',
+                recipients=['grover.donlon@gmail.com'],
+                html=f'<html><p>Dear Visions Member!</p>{name} with email {email} has sent you the following message:</p><p>{message}</p></html>'
+            )
+            msg_tosender = Message(
+                subject='Contact Request Message - Visions.Fit',
+                html=f'<html><p>Thank you {name} for contacting Visions.Fit, Please be patient as it can take up to 48 hours for a response.</p></html>',
+                recipients=[f'{email}']
+            )
+            try:
+                with mail.connect() as conn:
+                    conn.send(msg_tovisions)
+                    conn.send(msg_tosender)
+                flash('Email Sent Successfully - Please Wait 24 Hours For Your Response', 'success')
+                return redirect(url_for('contact_page'))
+            except Exception as e:
+                print(e)
+                flash('Internal Error - Please Try Again Later', 'danger')
+                return redirect(url_for('contact_page'))
 
 # Route to Display Trainer Page for Scheduling
 @app.route("/trainer", methods=['GET', 'POST'])
@@ -376,6 +379,7 @@ def member_page():
                     print('appointment_date', type(app.appointment_date))
                     print('appointment_time', type(app.appointment_time))
                     print('today_time', type(today_time))
+                    print('trainer_name', type(tra.name))
                     app_to_add = {
                         'appointment_id':app.id,
                         'trainer_name':tra.name,
@@ -419,7 +423,7 @@ def trainer_login():
                 return redirect(url_for('trainer_login'))
             else:
                 if trainer and check_password_hash(trainer.password, password):
-                    session['trainer'] = {"email":trainer.email, "trainer_id":trainer.trainer_id}
+                    session['trainer'] = {"email":trainer.email, "trainer_id":trainer.trainer_id, "name":trainer.name}
                     return redirect(url_for('trainer_member'))
                 else:
                     print("Failed Here")
@@ -872,10 +876,27 @@ def appointments_page():
                     elif appointment.appointment_date == datetime.now() and datetime.date(appointment.appointment_time) < datetime.time(datetime.now()):
                         db.session.delete(appointment)
                         db.session.commit()
-                    else:
-                        return render_template("/pages/appointments.jinja", year=year, user=user, appointments=appointments, current_date=today, current_time=today_time)
-                else :
-                    return redirect(url_for('member_page'))
+
+                result = db.session.execute(select(Appointments, Trainers).join(Appointments, Trainers.id == Appointments.trainer_id).filter_by(customer_id=user['id']))
+                appointments = []
+                
+                for app, tra in result:
+                    print('appointment_date', type(app.appointment_date))
+                    print('appointment_time', type(app.appointment_time))
+                    print('today_time', type(today_time))
+                    print('trainer_name', type(tra.name))
+                    app_to_add = {
+                        'appointment_id':app.id,
+                        'trainer_name':tra.name,
+                        'appointment_date':app.appointment_date,
+                        'appointment_time':app.appointment_time,
+                        'confirmed':app.confirmed
+                    }
+                    appointments.append(app_to_add)
+                if appointments:
+                    return render_template("/pages/appointments.jinja", year=year, user=user, appointments=appointments, current_date=today, current_time=today_time)
+                else:
+                    return render_template("/pages/appointments.jinja", year=year, user=user, current_date=today, current_time=today_time)
             except Exception as e:
                 print(e)
                 flash('Error Fetching Appointments', 'danger')
@@ -930,38 +951,47 @@ def appointments_trainer_page():
                 flash('Error Fetching Appointments', 'danger')
                 return redirect(url_for('trainer_member'))
         elif request.method == 'POST':
-            try:
-                appointment_confirm_id = request.form.get('confirm')
-                if appointment_confirm_id:
-                    appt = Appointments.query.filter_by(id=appointment_confirm_id).first()
-                    appt.confirmed = True
-                    db.session.add(appt)
-                    db.session.commit()
-                    user_email = User.query.filter_by(id=appt.customer_id).first().email
-                    msg = Message(subject='Appointment Confirmation - Visions.Fit', \
-                                body=f'Dear User:\nYour Appointment with {trainer["name"]} has been confirmed for {appt.appointment_date} at {appt.appointment_time}', \
-                                recipients=[user_email])
+            appointment_confirm_id = request.form.get('confirm')
+            appointment_cancel_id = request.form.get('cancel')
+            print("Confirm Response", appointment_confirm_id)
+            print("Cancel Response", appointment_cancel_id)
+            if appointment_confirm_id:
+                appt = Appointments.query.filter_by(id=appointment_confirm_id).first()
+                appt.confirmed = True
+                db.session.add(appt)
+                db.session.commit()
+                user_email = User.query.filter_by(id=appt.customer_id).first().email
+                msg = Message(subject='Appointment Confirmation - Visions.Fit', \
+                            body=f'Dear User:\nYour Appointment with {trainer["name"]} has been confirmed for {appt.appointment_date} at {appt.appointment_time}', \
+                            recipients=[user_email])
+                try:
                     with mail.connect() as conn:
                         conn.send(msg)
                     flash('Appointment Confirmed', 'success')
                     return redirect(url_for('appointments_trainer_page'))
-                appointment_cancel_id = request.form.get('cancel')
-                if appointment_cancel_id:
-                    appt = Appointments.query.filter_by(id=appointment_cancel_id).first()
-                    db.session.delete(appt)
-                    db.session.commit()
-                    user_email = User.query.filter_by(id=appt.customer_id).first().email
-                    msg = Message(subject='Appointment Cancellation - Visions.Fit', \
-                                body=f'Dear User:\nYour Appointment with {trainer["name"]} has been cancelled for {appt.appointment_date} at {appt.appointment_time}, please contact your trainer to re-schedule', \
-                                recipients=[user_email])
+                except Exception as e:
+                    print("Error Sending Email:", e)
+                    flash('Appointment Confirmed', 'success')
+                    return redirect(url_for('appointments_trainer_page'))
+            
+            if appointment_cancel_id:
+                appt = Appointments.query.filter_by(id=appointment_cancel_id).first()
+                db.session.delete(appt)
+                db.session.commit()
+                user_email = User.query.filter_by(id=appt.customer_id).first().email
+                msg = Message(subject='Appointment Cancellation - Visions.Fit', \
+                            body=f'Dear User:\nYour Appointment with {trainer["name"]} has been cancelled for {appt.appointment_date} at {appt.appointment_time}, please contact your trainer to re-schedule', \
+                            recipients=[user_email])
+                try:
                     with mail.connect() as conn:
                         conn.send(msg)
                     flash('Appointment Cancelled', 'success')
+                    return redirect(url_for('appointments_trainer_page'))    
+                except Exception as e:
+                    print("Error Sending Email:", e)
+                    flash('Appointment Cancellation Error', 'warning')
                     return redirect(url_for('appointments_trainer_page'))
-            except Exception as e:
-                print(e)
-                flash('Error Confirming Appointment', 'danger')
-                return redirect(url_for('appointments_trainer_page'))
+                    
 
         
 #region Google Auth Routes
