@@ -7,6 +7,13 @@ header {
     height: 200px;
 }
 
+.vertical-center {
+  margin: 0;
+  top: 50%;
+  -ms-transform: translateX(50%);
+  transform: translateX(50%);
+}
+
 .gradient_background {
     background: linear-gradient(90deg,#dff88c, #76f8f8);
     background-size: 180% 180%;
@@ -19,6 +26,10 @@ header {
     padding: None;
 }
 
+#headerlogo {
+  width: 100px;
+  height: 100px;
+}
 body {
     display: grid;
     width: 100%; 
@@ -303,8 +314,15 @@ textarea {
 }
 
 @media screen and (max-width: 576px) {
+  #headerlogo {
+    width: 75px;
+    height: 75px;
+  }
+  span#headertitle {
+    font-size: 56px;
+  }
     .edward{
-        content:url("../assets/images/edward_front_page_opt.png");
+        content:url("/static/assets/images/edward_front_page_opt.png");
         width: 75%;
         margin-left: 25%;
         align-self: center;

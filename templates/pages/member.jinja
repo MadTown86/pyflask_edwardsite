@@ -74,11 +74,11 @@
           {% if appointment.appointment_time > current_time %}
             {% if appointment.confirmed == true %}
           <div class="alert alert-success mt-3" role="alert">
-            <p>You have a confirmed appointment with {{appointment.trainer_name}} on {{ appointment.appointment_date }} at {{ appointment.appointment_time }}.</p>
+            <p>You have a confirmed appointment with {{appointment.trainer_name}} on {{ appointment.appointment_date.strftime('%m-%d-%Y') }} at {{ appointment.appointment_time.strftime('%I:00 %p') }}.</p>
           </div>
             {% else %}
           <div class="alert alert-warning mt-3" role="alert">
-            <p>You have a pending appointment with {{appointment.trainer_name}} on {{ appointment.appointment_date }} at {{ appointment.appointment_time }}.</p>
+            <p>You have a pending appointment with {{appointment.trainer_name}} on {{ appointment.appointment_date.strftime('%m-%d-%Y') }} at {{ appointment.appointment_time.strftime('%I:00 %p') }}.</p>
           </div>
             {% endif %}
           {% endif %}
@@ -86,11 +86,11 @@
         {% if appointment.appointment_date > current_date %}
           {% if appointment.confirmed == true %}
           <div class="alert alert-success mt-3" role="alert">
-            <p>You have a confirmed appointment with {{appointment.trainer_name}} on {{ appointment.appointment_date }} at {{ appointment.appointment_time }}.</p>
+            <p>You have a confirmed appointment with {{appointment.trainer_name}} on {{ appointment.appointment_date.strftime('%m-%d-%Y') }} at {{ appointment.appointment_time.strftime('%I:00 %p') }}.</p>
           </div>
           {% else %}
           <div class="alert alert-warning mt-3" role="alert">
-            <p>You have a pending appointment with {{appointment.trainer_name}} on {{ appointment.appointment_date }} at {{ appointment.appointment_time }}.</p>
+            <p>You have a pending appointment with {{appointment.trainer_name}} on {{ appointment.appointment_date.strftime('%m-%d-%Y') }} at {{ appointment.appointment_time.strftime('%I:00 %p') }}.</p>
           </div>
           {% endif %}
         {% endif %}

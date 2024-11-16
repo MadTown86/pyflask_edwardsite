@@ -36,8 +36,8 @@
           {% if appointment.appointment_date == current_date %}
             {% if appointment.appointment_time > current_time %}
                 <tr>
-                  <td>{{ appointment.appointment_date }}</td>
-                  <td>{{ appointment.appointment_time }}</td>
+                  <td>{{ appointment.appointment_date.strftime('%m-%d-%Y') }}</td>
+                  <td>{{ appointment.appointment_time.strftime('%I:00 %p') }}</td>
                   <td>{{ appointment.trainer_name }}</td>
                   {% if appointment.confirmed == true %}
                   <td>Confirmed</td>
@@ -53,8 +53,8 @@
 
           {% if appointment.appointment_date > current_date %}
             <tr>
-              <td>{{ appointment.appointment_date }}</td>
-              <td>{{ appointment.appointment_time }}</td>
+              <td>{{ appointment.appointment_date.strftime('%m-%d-%Y') }}</td>
+              <td>{{ appointment.appointment_time.strftime('%I:00 %p') }}</td>
               <td>{{ appointment.trainer_name }}</td>
               {% if appointment.confirmed == true %}
               <td>Confirmed</td>
@@ -75,7 +75,7 @@
         <div class="row justify-content-md-center">
           <div class="col col-lg-2">
           </div>
-          <div class="col-md-auto">
+          <div class="col vertical-center">
               <form method="get" action="/member">
               <button class="btn btn-success w-15 my-2 py-2 justify-content-cente" type="submit">Back</button>
               </form>

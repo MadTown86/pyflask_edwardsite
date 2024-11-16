@@ -49,8 +49,8 @@
     <tbody>
       {% for appointment in appointments %}
       <tr>
-        <td>{{ appointment.appointment_date }}</td>
-        <td>{{ appointment.appointment_time }}</td>
+        <td>{{ appointment.appointment_date.strftime('%m-%d-%Y') }}</td>
+        <td>{{ appointment.appointment_time.strftime('%I:00 %p') }}</td>
         <td>{{ clients[appointment.customer_id] }}</td>
         {% if appointment.confirmed == true %}
         <td>Confirmed</td>
@@ -85,7 +85,7 @@
         <div class="row justify-content-md-center">
           <div class="col col-lg-2">
           </div>
-          <div class="col-md-auto">
+          <div class="col md-auto vertical-center">
               <form method="get" action="/trainer_member">
               <button class="btn btn-success w-15 my-2 py-2 justify-content-cente" type="submit">Back</button>
               </form>
